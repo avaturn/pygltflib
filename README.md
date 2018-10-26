@@ -66,29 +66,29 @@ Using sample models loaded and then saved using this library, here are validator
 
 | Model | Validator Status |
 | ------| ------- |
-| 2CylinderEngine | errors: 67 | 
-| AlphaBlendModeTest | errors: 8 | 
+| 2CylinderEngine | passes | 
+| AlphaBlendModeTest | passes | 
 | AnimatedCube | passes | 
 | AnimatedMorphCube |  | 
 | AnimatedMorphSphere |  | 
 | AnimatedTriangle |  | 
-| Avocado |  | 
-| BarramundiFish |  | 
+| Avocado | passes | 
+| BarramundiFish | passes | 
 | BoomBox |  | 
 | BoomBoxWithAxes |  | 
 | Box | passes | 
 | BoxAnimated | passes | 
-| BoxInterleaved |  | 
+| BoxInterleaved | passes | 
 | BoxTextured |  | 
 | BoxTexturedNonPowerOfTwo |  | 
 | BoxVertexColors |  | 
 | BrainStem |  | 
 | Buggy |  | 
 | Cameras |  | 
-| CesiumMan |  | 
-| CesiumMilkTruck |  | 
+| CesiumMan | passes | 
+| CesiumMilkTruck | passes | 
 | Corset |  | 
-| Cube | errors: 2 | 
+| Cube | passes | 
 | DamagedHelmet |  | 
 | Duck |  | 
 | FlightHelmet |  | 
@@ -115,7 +115,7 @@ Using sample models loaded and then saved using this library, here are validator
 | TextureTransformTest |  |
 | Triangle | passes | 
 | TriangleWithoutIndices |  | 
-| TwoSidedPlane | errors: 3 | 
+| TwoSidedPlane | passes | 
 | VC |  | 
 | VertexColorTest |  | 
 | WaterBottle |  | 

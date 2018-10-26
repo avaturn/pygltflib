@@ -182,6 +182,8 @@ class Node:
     mesh: int = None
     name: str = None
     rotation: List[float] = field(default_factory=list)
+    children: List[int] = field(default_factory=list)
+    matrix: List[float] = field(default_factory=list)
 
 
 @dataclass_json
@@ -189,9 +191,6 @@ class Node:
 class Scene:
     name: str = ""
     nodes: List[int] = field(default_factory=list)
-
-
-
 
 
 @dataclass_json
@@ -217,6 +216,12 @@ class Texture:
 
 @dataclass_json
 @dataclass
+class Image:
+    uri: str = None
+
+
+@dataclass_json
+@dataclass
 class Animation:
     name: str = None
     channels:  List[Channel] = field(default_factory=list)
@@ -234,6 +239,8 @@ class GLTF2:
     meshes: List[Mesh] = field(default_factory=list)
     nodes: List[Node] = field(default_factory=list)
     samplers: List[Sampler] = field(default_factory=list)
+    images: List[Image] = field(default_factory=list)
+
     textures: List[Texture] = field(default_factory=list)
     animations: List[Animation] = field(default_factory=list)
     scene: int = None
