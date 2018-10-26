@@ -112,15 +112,15 @@ Using sample models loaded and then saved using this library, here are validator
 | SpecGlossVsMetalRough |  | 
 | Sponza |  | 
 | Suzanne |  | 
-| TextureCoordinateTest |  | 
-| TextureSettingsTest |  | 
+| TextureCoordinateTest | passes | 
+| TextureSettingsTest | passes | 
 | TextureTransformTest |  |
 | Triangle | passes | 
 | TriangleWithoutIndices |  | 
 | TwoSidedPlane | passes | 
 | VC |  | 
 | VertexColorTest |  | 
-| WaterBottle |  | 
+| WaterBottle | passes | 
 
 
 

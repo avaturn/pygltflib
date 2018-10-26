@@ -72,8 +72,8 @@ def json_serial(obj):
 @dataclass_json
 @dataclass
 class Asset:
-    version: str = "2.0"
     generator: str = f"pygltflib@v{__version__}"
+    version: str = "2.0"
 
 
 @dataclass_json
@@ -101,8 +101,8 @@ class Primitive:
 @dataclass_json
 @dataclass
 class Mesh:
-    name: str = None
     primitives: List[Primitive] = field(default_factory=list)
+    name: str = None
 
 
 @dataclass_json
@@ -159,9 +159,12 @@ class PbrMetallicRoughness:
 @dataclass_json
 @dataclass
 class Material:
-    name: str = ""
     pbrMetallicRoughness: PbrMetallicRoughness = None
+    normalTexture: MaterialTexture = None
+    occlusionTexture: MaterialTexture = None
     emissiveFactor: List[float] = field(default_factory=list)
+    emissiveTexture: MaterialTexture = None
+    name: str = ""
 
 
 @dataclass_json
@@ -185,12 +188,12 @@ class Sampler:
 class Node:
     mesh: int = None
     skin: int = None
-    name: str = None
     rotation: List[float] = field(default_factory=list)
     translation: List[float] = field(default_factory=list)
     scale: List[float] = field(default_factory=list)
     children: List[int] = field(default_factory=list)
     matrix: List[float] = field(default_factory=list)
+    name: str = None
 
 
 @dataclass_json
@@ -245,21 +248,20 @@ class Animation:
 
 @dataclass
 class GLTF2:
-    asset: Asset = Asset()
-    scenes: List[Scene] = field(default_factory=list)
-    buffers: List[Buffer] = field(default_factory=list)
-    bufferViews: List[BufferView] = field(default_factory=list)
     accessors: List[Accessor] = field(default_factory=list)
-    materials: List[Material] = field(default_factory=list)
-    meshes: List[Mesh] = field(default_factory=list)
-    nodes: List[Node] = field(default_factory=list)
-    skins: List[Skin] = field(default_factory=list)
-    samplers: List[Sampler] = field(default_factory=list)
-    images: List[Image] = field(default_factory=list)
-
-    textures: List[Texture] = field(default_factory=list)
     animations: List[Animation] = field(default_factory=list)
+    asset: Asset = Asset()
+    bufferViews: List[BufferView] = field(default_factory=list)
+    buffers: List[Buffer] = field(default_factory=list)
+    images: List[Image] = field(default_factory=list)
+    meshes: List[Mesh] = field(default_factory=list)
+    materials: List[Material] = field(default_factory=list)
+    nodes: List[Node] = field(default_factory=list)
+    samplers: List[Sampler] = field(default_factory=list)
     scene: int = None
+    scenes: List[Scene] = field(default_factory=list)
+    skins: List[Skin] = field(default_factory=list)
+    textures: List[Texture] = field(default_factory=list)
 
     # to_json and from_json from dataclasses_json
     # courtesy https://github.com/lidatong/dataclasses-json
@@ -330,7 +332,7 @@ class GLTF2:
         return _decode_dataclass(cls, init_kwargs, infer_missing)
 
     def gltf_to_json(self) -> str:
-        return self.to_json(default=json_serial, indent=True, allow_nan=False, skipkeys=True)
+        return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
     def save(self, fname):
         with open(fname, "w") as f:
