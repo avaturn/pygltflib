@@ -22,7 +22,6 @@ SOFTWARE.
 
 from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
-from dataclasses_jsonschema import JsonSchemaMixin
 from dataclasses_json.core import _CollectionEncoder, _decode_dataclass
 from datetime import date, datetime
 
@@ -33,17 +32,8 @@ from typing import List, TextIO
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
-try:
-    import git
-except ImportError:
-    git = None
+__version__ = "0.2"
 
-if git:
-    repo = git.Repo(search_parent_directories=True)
-    sha = repo.head.object.hexsha
-    __version__ = sha
-else:
-    __version__ = "0.1"
 
 A = TypeVar('A')
 

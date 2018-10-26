@@ -50,7 +50,7 @@ Node(mesh=0, name='AnimatedCube', rotation=[0.0, -1.0, 0.0, 0.0])
 'AnimatedCube'
 
 >>> gltf.meshes[0].primitives[0].attributes
-Attributes(NORMAL=4, POSITON=None, TANGENT=5, TEXCOORD_0=6)
+Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
 
 >>> filename2 = "test.gltf"
 >>> gltf = GLTF2().save(filename2)
