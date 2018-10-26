@@ -22,6 +22,7 @@ SOFTWARE.
 
 from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
+from dataclasses_jsonschema import JsonSchemaMixin
 from dataclasses_json.core import _CollectionEncoder, _decode_dataclass
 from datetime import date, datetime
 
@@ -77,6 +78,9 @@ def json_serial(obj):
     raise TypeError("Type %s not serializable" % type(obj))
 
 
+
+
+
 @dataclass_json
 @dataclass
 class Asset:
@@ -86,24 +90,19 @@ class Asset:
 
 @dataclass_json
 @dataclass
-class Scene:
-    name: str = ""
-    nodes: List[int] = field(default_factory=list)
+class Attributes:
+    NORMAL: int = None
+    POSITION: int = None
+    TANGENT: int = None
+    TEXCOORD_0: int = None
+
+
 
 
 @dataclass_json
 @dataclass
 class Node:
     pass
-
-
-@dataclass_json
-@dataclass
-class Attributes:
-    NORMAL: int = None
-    POSITON: int = None
-    TANGENT: int = None
-    TEXCOORD_0: int = None
 
 
 @dataclass_json
@@ -155,34 +154,90 @@ class Buffer:
 class Camera:
     pass
 
-
-@dataclass_json
-@dataclass
-class Material:
-    name: str = ""
-
-
-@dataclass_json
-@dataclass
-class Sample:
-    pass
-
-
-@dataclass_json
-@dataclass
-class Node:
-    #mesh: int = None
-    pass
- #   name: str = None
-#    rotation: List[float] = field(default_factory=list)
-
-
 @dataclass_json
 @dataclass
 class Texture:
     sampler: int = None
     source: int = None
 
+@dataclass_json
+@dataclass
+class Texture:
+    index: int = None
+
+
+@dataclass_json
+@dataclass
+class PbrMetallicRoughness:
+    baseColorFactor: List[float] = field(default_factory=list)
+    metallicFactor: float = 0
+    roughnessFactor: float = 0
+    #baseColorTexture
+    #metallicRoughnessTexture
+
+
+
+@dataclass_json
+@dataclass
+class Material:
+    name: str = ""
+    pbrMetallicRoughness: PbrMetallicRoughness = None
+
+
+@dataclass_json
+@dataclass
+class Sampler:
+    """
+    Samplers are stored in the samplers array of the asset.
+    Each sampler specifies filter and wrapping options corresponding to the GL types
+    """
+    input: int = None
+    interpolation: str = None
+    output: int = None
+    magFilter: int = None
+    minFilter: int = None
+    wrapS: int = None  # repeat wrapping in S (U)
+    wrapT: int = None  # repeat wrapping in T (V)
+
+
+@dataclass_json
+@dataclass
+class Node:
+    mesh: int = None
+    name: str = None
+    rotation: List[float] = field(default_factory=list)
+
+
+@dataclass_json
+@dataclass
+class Scene:
+    name: str = ""
+    nodes: List[int] = field(default_factory=list)
+
+
+
+
+
+@dataclass_json
+@dataclass
+class Target:
+    node: int = None
+    path: str = None
+
+
+@dataclass_json
+@dataclass
+class Channel:
+    sampler: int = None
+    target: Target = None
+
+
+@dataclass_json
+@dataclass
+class Animation:
+    name: str = None
+    channels:  List[Channel] = field(default_factory=list)
+    samplers: List[Sampler] = field(default_factory=list)
 
 
 @dataclass
@@ -195,8 +250,9 @@ class GLTF2:
     materials: List[Material] = field(default_factory=list)
     meshes: List[Mesh] = field(default_factory=list)
     nodes: List[Node] = field(default_factory=list)
-    samplers: List[Sample] = field(default_factory=list)
+    samplers: List[Sampler] = field(default_factory=list)
     textures: List[Texture] = field(default_factory=list)
+    animations: List[Animation] = field(default_factory=list)
     scene: int = None
 
     # to_json and from_json from dataclasses_json
@@ -227,15 +283,18 @@ class GLTF2:
             # For Python 3, write `list(d.items())`; `d.items()` won’t work
             # For Python 2, write `d.items()`; `d.iteritems()` won’t work
             for key, value in list(d.items()):
+                print("check",key,value)
                 if value is None or (hasattr(value, '__iter__') and len(value) == 0):
                     del d[key]
                 elif isinstance(value, dict):
                     del_none(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            del_none(item)
             return d  # For convenience
+        import pdb; pdb.set_trace()
         data = del_none(data)
-        if len(self.scenes) == 0:
-            del data["scene"]
-
         return json.dumps(data,
                           cls=_CollectionEncoder,
                           skipkeys=skipkeys,
@@ -267,11 +326,11 @@ class GLTF2:
         return _decode_dataclass(cls, init_kwargs, infer_missing)
 
     def gltf_to_json(self) -> str:
-        return self.to_json()  # default=json_serial, allow_nan=False, skipkeys=True)
+        return self.to_json(default=json_serial, indent=True, allow_nan=False, skipkeys=True)
 
     def save(self, fname):
         with open(fname, "w") as f:
-            f.write(self, self.gltf_to_json())
+            f.write(self.gltf_to_json())
         return True
 
     def load(self, fname):

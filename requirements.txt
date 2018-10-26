@@ -1,3 +1,4 @@
 gitpython
 dataclasses-json
 numpy
+python_jsonschema_objects
