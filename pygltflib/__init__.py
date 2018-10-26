@@ -79,10 +79,14 @@ class Asset:
 @dataclass_json
 @dataclass
 class Attributes:
-    NORMAL: int = None
     POSITION: int = None
+    NORMAL: int = None
     TANGENT: int = None
     TEXCOORD_0: int = None
+    TEXCOORD_1: int = None
+    COLOR_0: int = None
+    JOINTS_0: int = None
+    WEIGHTS_0: int = None
 
 
 @dataclass_json
@@ -90,8 +94,8 @@ class Attributes:
 class Primitive:
     attributes: Attributes = Attributes()
     indices: int = None
-    material: int = None
     mode: int = None
+    material: int = None
 
 
 @dataclass_json
@@ -136,21 +140,20 @@ class Camera:
     pass
 
 
-#@dataclass_json
-#@dataclass
-#class MaterialTexture:
-#    index: int = None
+@dataclass_json
+@dataclass
+class MaterialTexture:
+    index: int = None
 
 
 @dataclass_json
 @dataclass
 class PbrMetallicRoughness:
     baseColorFactor: List[float] = field(default_factory=list)
-    metallicFactor: float = 0
-    roughnessFactor: float = 0
-    #baseColorTexture
-    #metallicRoughnessTexture
-
+    metallicFactor: float = None
+    roughnessFactor: float = None
+    baseColorTexture: MaterialTexture = None
+    metallicRoughnessTexture: MaterialTexture = None
 
 
 @dataclass_json
@@ -158,6 +161,7 @@ class PbrMetallicRoughness:
 class Material:
     name: str = ""
     pbrMetallicRoughness: PbrMetallicRoughness = None
+    emissiveFactor: List[float] = field(default_factory=list)
 
 
 @dataclass_json
@@ -180,17 +184,41 @@ class Sampler:
 @dataclass
 class Node:
     mesh: int = None
+    skin: int = None
     name: str = None
     rotation: List[float] = field(default_factory=list)
+    translation: List[float] = field(default_factory=list)
+    scale: List[float] = field(default_factory=list)
     children: List[int] = field(default_factory=list)
     matrix: List[float] = field(default_factory=list)
 
 
 @dataclass_json
 @dataclass
+class Skin:
+    inverseBindMatrices: int = None
+    skeleton: int = None
+    joints: List[int] = field(default_factory=list)
+    name: str = None
+
+@dataclass_json
+@dataclass
 class Scene:
     name: str = ""
     nodes: List[int] = field(default_factory=list)
+
+
+@dataclass_json
+@dataclass
+class Texture:
+    sampler: int = None
+    source: int = None
+
+
+@dataclass_json
+@dataclass
+class Image:
+    uri: str = None
 
 
 @dataclass_json
@@ -205,19 +233,6 @@ class Target:
 class Channel:
     sampler: int = None
     target: Target = None
-
-
-@dataclass_json
-@dataclass
-class Texture:
-    sampler: int = None
-    source: int = None
-
-
-@dataclass_json
-@dataclass
-class Image:
-    uri: str = None
 
 
 @dataclass_json
@@ -238,6 +253,7 @@ class GLTF2:
     materials: List[Material] = field(default_factory=list)
     meshes: List[Mesh] = field(default_factory=list)
     nodes: List[Node] = field(default_factory=list)
+    skins: List[Skin] = field(default_factory=list)
     samplers: List[Sampler] = field(default_factory=list)
     images: List[Image] = field(default_factory=list)
 

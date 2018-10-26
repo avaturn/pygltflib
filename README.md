@@ -1,9 +1,11 @@
 # pygltflib
 
-Python library for reading, writing and handling GLTF files. Python3.7+
+Python library for reading, writing and handling GLTF files. Python3.6+
 
 ## Requirements
-* Python 3.7
+* Python 3.6
+* dataclasses
+* dataclasses-json
 * numpy
 
 
@@ -25,14 +27,14 @@ pip install pygltflib
 
 or
 
-python3.7 -m pip install pygltflib
+python -m pip install pygltflib
 
 ## Usage
 Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Kronos at:
 
 https://github.com/KhronosGroup/glTF-Sample-Models
 
-```python3.7
+```python3
 >>> from pygltflib import GLTF2
 >>> filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 >>> gltf = GLTF2().load(filename)
@@ -95,7 +97,7 @@ Using sample models loaded and then saved using this library, here are validator
 | GearboxAssy |  | 
 | Lantern |  | 
 | MetalRoughSpheres |  | 
-| Monster | errors: 2 | 
+| Monster | passes | 
 | MultiUVTest |  | 
 | NormalTangentMirrorTest |  | 
 | NormalTangentTest |  | 
