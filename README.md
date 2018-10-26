@@ -6,6 +6,20 @@ Python library for reading, writing and handling GLTF files. Python3.7+
 * Python 3.7
 * numpy
 
+
+## About
+The library tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
+
+The library was initially built to load and save simple meshes, support for materials and animations is experimental. 
+Check the table below for an idea of which sample models validate.
+
+
+
+Roadmap:
+* Finishing building out schemas 
+* Validate sample models
+* Add helper functions
+
 ## Install
 pip install pygltflib 
 
@@ -43,75 +57,68 @@ Attributes(NORMAL=4, POSITON=None, TANGENT=5, TEXCOORD_0=6)
 
 ```
 
-```python
-from pygltflib import GLTF2
-filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
-gltf = GLTF2().load(filename)
-gltf.nodes[0].name = "AnimatedCubeHelloWorld"
-filename2 = "test.gltf"
-gltf = GLTF2().save(filename2)
-
-```
 
 ## Running the tests
 
-### Status of gltf-validator on sample models loaded and then saved using this library
+### Status of gltf-validator
+Using sample models loaded and then saved using this library, here are validator reports (blank is untested). 
+
 
 | Model | Validator Status |
 | ------| ------- |
-| 2CylinderEngine | Untested | 
-| AlphaBlendModeTest | Untested | 
-| AnimatedCube | Passing (4 infos) | 
-| AnimatedMorphCube | Untested | 
-| AnimatedMorphSphere | Untested | 
-| AnimatedTriangle | Untested | 
-| Avocado | Untested | 
-| BarramundiFish | Untested | 
-| BoomBox | Untested | 
-| BoomBoxWithAxes | Untested | 
-| Box | Untested | 
-| BoxAnimated | Untested | 
-| BoxInterleaved | Untested | 
-| BoxTextured | Untested | 
-| BoxTexturedNonPowerOfTwo | Untested | 
-| BoxVertexColors | Untested | 
-| BrainStem | Untested | 
-| Buggy | Untested | 
-| Cameras | Untested | 
-| CesiumMan | Untested | 
-| CesiumMilkTruck | Untested | 
-| Corset | Untested | 
-| Cube | Untested | 
-| DamagedHelmet | Untested | 
-| Duck | Untested | 
-| FlightHelmet | Untested | 
-| GearboxAssy | Untested | 
-| Lantern | Untested | 
-| MetalRoughSpheres | Untested | 
-| Monster | Untested | 
-| MultiUVTest | Untested | 
-| NormalTangentMirrorTest | Untested | 
-| NormalTangentTest | Untested | 
-| OrientationTest | Untested | 
-| ReciprocatingSaw | Untested | 
-| RiggedFigure | Untested | 
-| RiggedSimple | Untested | 
-| SciFiHelmet | Untested | 
-| SimpleMeshes | Untested | 
-| SimpleMorph | Untested | 
-| SimpleSparseAccessor | Untested | 
-| SpecGlossVsMetalRough | Untested | 
-| Sponza | Untested | 
-| Suzanne | Untested | 
-| TextureCoordinateTest | Untested | 
-| TextureSettingsTest | Untested | 
-| TextureTransformTest | Untested |
-| Triangle | Untested | 
-| TriangleWithoutIndices | Untested | 
-| TwoSidedPlane | Untested | 
-| VC | Untested | 
-| VertexColorTest | Untested | 
-| WaterBottle | Untested | 
+| 2CylinderEngine | errors: 67 | 
+| AlphaBlendModeTest | errors: 8 | 
+| AnimatedCube | passes | 
+| AnimatedMorphCube |  | 
+| AnimatedMorphSphere |  | 
+| AnimatedTriangle |  | 
+| Avocado |  | 
+| BarramundiFish |  | 
+| BoomBox |  | 
+| BoomBoxWithAxes |  | 
+| Box | passes | 
+| BoxAnimated | passes | 
+| BoxInterleaved |  | 
+| BoxTextured |  | 
+| BoxTexturedNonPowerOfTwo |  | 
+| BoxVertexColors |  | 
+| BrainStem |  | 
+| Buggy |  | 
+| Cameras |  | 
+| CesiumMan |  | 
+| CesiumMilkTruck |  | 
+| Corset |  | 
+| Cube | errors: 2 | 
+| DamagedHelmet |  | 
+| Duck |  | 
+| FlightHelmet |  | 
+| GearboxAssy |  | 
+| Lantern |  | 
+| MetalRoughSpheres |  | 
+| Monster | errors: 2 | 
+| MultiUVTest |  | 
+| NormalTangentMirrorTest |  | 
+| NormalTangentTest |  | 
+| OrientationTest |  | 
+| ReciprocatingSaw |  | 
+| RiggedFigure |  | 
+| RiggedSimple |  | 
+| SciFiHelmet |  | 
+| SimpleMeshes | passes | 
+| SimpleMorph |  | 
+| SimpleSparseAccessor |  | 
+| SpecGlossVsMetalRough |  | 
+| Sponza |  | 
+| Suzanne |  | 
+| TextureCoordinateTest |  | 
+| TextureSettingsTest |  | 
+| TextureTransformTest |  |
+| Triangle | passes | 
+| TriangleWithoutIndices |  | 
+| TwoSidedPlane | errors: 3 | 
+| VC |  | 
+| VertexColorTest |  | 
+| WaterBottle |  | 
 
 
 
@@ -120,6 +127,3 @@ gltf = GLTF2().save(filename2)
 ### unittests
 python -m tests
 
-
-### doctests
-python -m doctest -v README.md

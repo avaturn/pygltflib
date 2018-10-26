@@ -79,8 +79,6 @@ def json_serial(obj):
 
 
 
-
-
 @dataclass_json
 @dataclass
 class Asset:
@@ -95,14 +93,6 @@ class Attributes:
     POSITION: int = None
     TANGENT: int = None
     TEXCOORD_0: int = None
-
-
-
-
-@dataclass_json
-@dataclass
-class Node:
-    pass
 
 
 @dataclass_json
@@ -139,6 +129,7 @@ class BufferView:
     buffer: int = None
     byteOffset: int = None
     byteLength: int = None
+    byteStride: int = None
     target: int = None
 
 
@@ -154,16 +145,11 @@ class Buffer:
 class Camera:
     pass
 
-@dataclass_json
-@dataclass
-class Texture:
-    sampler: int = None
-    source: int = None
 
-@dataclass_json
-@dataclass
-class Texture:
-    index: int = None
+#@dataclass_json
+#@dataclass
+#class MaterialTexture:
+#    index: int = None
 
 
 @dataclass_json
@@ -234,6 +220,13 @@ class Channel:
 
 @dataclass_json
 @dataclass
+class Texture:
+    sampler: int = None
+    source: int = None
+
+
+@dataclass_json
+@dataclass
 class Animation:
     name: str = None
     channels:  List[Channel] = field(default_factory=list)
@@ -277,13 +270,12 @@ class GLTF2:
 
             This alters the input so you may wish to ``copy`` the dict first.
 
-            Courtest Chris Morgan:
+            Courtesy Chris Morgan and modified from:
             https://stackoverflow.com/questions/4255400/exclude-empty-null-values-from-json-serialization
             """
             # For Python 3, write `list(d.items())`; `d.items()` won’t work
             # For Python 2, write `d.items()`; `d.iteritems()` won’t work
             for key, value in list(d.items()):
-                print("check",key,value)
                 if value is None or (hasattr(value, '__iter__') and len(value) == 0):
                     del d[key]
                 elif isinstance(value, dict):
@@ -293,7 +285,6 @@ class GLTF2:
                         if isinstance(item, dict):
                             del_none(item)
             return d  # For convenience
-        import pdb; pdb.set_trace()
         data = del_none(data)
         return json.dumps(data,
                           cls=_CollectionEncoder,
