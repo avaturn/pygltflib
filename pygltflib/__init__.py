@@ -88,20 +88,21 @@ class Attributes:
     JOINTS_0: int = None
     WEIGHTS_0: int = None
 
-@dataclass_json
-@dataclass
-class PrimitiveTarget: #TODO is this the same as Attributes?
-    POSITION: int = None
+
+#@dataclass_json
+#@dataclass
+#class PrimitiveTarget: #TODO is this the same as Attributes?
+#    POSITION: int = None
 
 
 @dataclass_json
 @dataclass
 class Primitive:
     attributes: Attributes = Attributes()
-    targets: List[PrimitiveTarget] = field(default_factory=list)
     indices: int = None
     mode: int = None
     material: int = None
+    targets: List[Attributes] = field(default_factory=list)
 
 
 @dataclass_json
@@ -119,12 +120,14 @@ class SparseAccessor: # TODO is this the same as Accessor
     byteOffset: int = None
     componentType: int = None
 
+
 @dataclass_json
 @dataclass
 class Sparse:
     count: int = 0
     indices: SparseAccessor = None # TODO this might be an Accessor but that would couple the classes
     values: SparseAccessor = None
+
 
 @dataclass_json
 @dataclass
@@ -137,6 +140,7 @@ class Accessor:
     sparse: Sparse = None
     max: List[float] = field(default_factory=list)
     min: List[float] = field(default_factory=list)
+    name: str = None
 
 
 @dataclass_json
@@ -206,7 +210,7 @@ class Material:
     occlusionTexture: MaterialTexture = None
     emissiveFactor: List[float] = field(default_factory=list)
     emissiveTexture: MaterialTexture = None
-    name: str = ""
+    name: str = None
 
 
 @dataclass_json
@@ -246,6 +250,7 @@ class Skin:
     skeleton: int = None
     joints: List[int] = field(default_factory=list)
     name: str = None
+
 
 @dataclass_json
 @dataclass
@@ -376,7 +381,7 @@ class GLTF2:
         return _decode_dataclass(cls, init_kwargs, infer_missing)
 
     def gltf_to_json(self) -> str:
-        return self.to_json(default=json_serial, indent="    ", allow_nan=False, skipkeys=True)
+        return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
     def save(self, fname, asset=Asset()):
         self.asset = asset
