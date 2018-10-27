@@ -82,17 +82,17 @@ Using sample models loaded and then saved using this library, here are validator
 | BoxAnimated | passes | 
 | BoxInterleaved | passes | 
 | BoxTextured |  | 
-| BoxTexturedNonPowerOfTwo |  | 
+| BoxTexturedNonPowerOfTwo | passes | 
 | BoxVertexColors |  | 
-| BrainStem |  | 
-| Buggy |  | 
-| Cameras |  | 
+| BrainStem | passes | 
+| Buggy | passes | 
+| Cameras | passes | 
 | CesiumMan | passes | 
 | CesiumMilkTruck | passes | 
 | Corset |  | 
 | Cube | passes | 
 | DamagedHelmet |  | 
-| Duck |  | 
+| Duck | passes | 
 | FlightHelmet |  | 
 | GearboxAssy |  | 
 | Lantern |  | 
@@ -101,9 +101,9 @@ Using sample models loaded and then saved using this library, here are validator
 | MultiUVTest |  | 
 | NormalTangentMirrorTest |  | 
 | NormalTangentTest |  | 
-| OrientationTest |  | 
+| OrientationTest | passes | 
 | ReciprocatingSaw |  | 
-| RiggedFigure |  | 
+| RiggedFigure | passes | 
 | RiggedSimple |  | 
 | SciFiHelmet |  | 
 | SimpleMeshes | passes | 

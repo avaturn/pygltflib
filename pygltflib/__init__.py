@@ -32,7 +32,7 @@ from typing import List, TextIO
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
-__version__ = "0.2"
+__version__ = "1.0"
 
 
 A = TypeVar('A')
@@ -136,8 +136,28 @@ class Buffer:
 
 @dataclass_json
 @dataclass
+class Perspective:
+    aspectRatio: float = None
+    yfov: float = None
+    zfar: float = None
+    znear: float = None
+
+
+@dataclass_json
+@dataclass
+class Orthographic:
+    xmag: float = None
+    ymag: float = None
+    zfar: float = None
+    znear: float = None
+
+
+@dataclass_json
+@dataclass
 class Camera:
-    pass
+    perspective: Perspective = None
+    orthographic: Orthographic = None
+    type: str = None
 
 
 @dataclass_json
@@ -193,6 +213,7 @@ class Node:
     scale: List[float] = field(default_factory=list)
     children: List[int] = field(default_factory=list)
     matrix: List[float] = field(default_factory=list)
+    camera: int = None
     name: str = None
 
 
@@ -253,6 +274,7 @@ class GLTF2:
     asset: Asset = Asset()
     bufferViews: List[BufferView] = field(default_factory=list)
     buffers: List[Buffer] = field(default_factory=list)
+    cameras: List[Camera] = field(default_factory=list)
     images: List[Image] = field(default_factory=list)
     meshes: List[Mesh] = field(default_factory=list)
     materials: List[Material] = field(default_factory=list)
@@ -334,7 +356,8 @@ class GLTF2:
     def gltf_to_json(self) -> str:
         return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
-    def save(self, fname):
+    def save(self, fname, asset=Asset()):
+        self.asset = asset
         with open(fname, "w") as f:
             f.write(self.gltf_to_json())
         return True
