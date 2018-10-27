@@ -32,7 +32,7 @@ from typing import List, Dict, TextIO
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 
 A = TypeVar('A')
