@@ -107,8 +107,8 @@ Using sample models loaded and then saved using this library, here are validator
 | RiggedSimple |  | 
 | SciFiHelmet |  | 
 | SimpleMeshes | passes | 
-| SimpleMorph |  | 
-| SimpleSparseAccessor |  | 
+| SimpleMorph | passes | 
+| SimpleSparseAccessor | passes | 
 | SpecGlossVsMetalRough |  | 
 | Sponza |  | 
 | Suzanne |  | 

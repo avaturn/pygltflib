@@ -114,12 +114,27 @@ class Mesh:
 
 @dataclass_json
 @dataclass
+class SparseAccessor: # TODO is this the same as Accessor
+    bufferView: int = None
+    byteOffset: int = None
+    componentType: int = None
+
+@dataclass_json
+@dataclass
+class Sparse:
+    count: int = 0
+    indices: SparseAccessor = None # TODO this might be an Accessor but that would couple the classes
+    values: SparseAccessor = None
+
+@dataclass_json
+@dataclass
 class Accessor:
     bufferView: int = None
     byteOffset: int = None
     componentType: int = None
     count: int = None
     type: str = None
+    sparse: Sparse = None
     max: List[float] = field(default_factory=list)
     min: List[float] = field(default_factory=list)
 
@@ -361,7 +376,7 @@ class GLTF2:
         return _decode_dataclass(cls, init_kwargs, infer_missing)
 
     def gltf_to_json(self) -> str:
-        return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
+        return self.to_json(default=json_serial, indent="    ", allow_nan=False, skipkeys=True)
 
     def save(self, fname, asset=Asset()):
         self.asset = asset
