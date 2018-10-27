@@ -28,7 +28,7 @@ from datetime import date, datetime
 import json
 import numpy as np
 import os, os.path
-from typing import List, TextIO
+from typing import List, Dict, TextIO
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
@@ -73,6 +73,7 @@ def json_serial(obj):
 @dataclass
 class Asset:
     generator: str = f"pygltflib@v{__version__}"
+    copyright: str = None
     version: str = "2.0"
 
 
@@ -151,6 +152,7 @@ class BufferView:
     byteLength: int = None
     byteStride: int = None
     target: int = None
+    name: str = None
 
 
 @dataclass_json
@@ -184,12 +186,15 @@ class Camera:
     perspective: Perspective = None
     orthographic: Orthographic = None
     type: str = None
+    name: str = None
+
 
 
 @dataclass_json
 @dataclass
 class MaterialTexture:
     index: int = None
+    texCoord: int = None
 
 
 @dataclass_json
@@ -204,6 +209,12 @@ class PbrMetallicRoughness:
 
 @dataclass_json
 @dataclass
+class Extension: # TODO: expand this out
+    pass
+
+
+@dataclass_json
+@dataclass
 class Material:
     pbrMetallicRoughness: PbrMetallicRoughness = None
     normalTexture: MaterialTexture = None
@@ -211,6 +222,7 @@ class Material:
     emissiveFactor: List[float] = field(default_factory=list)
     emissiveTexture: MaterialTexture = None
     name: str = None
+    extensions: Dict[str, Extension] = field(default_factory=dict)
 
 
 @dataclass_json
@@ -302,6 +314,8 @@ class GLTF2:
     bufferViews: List[BufferView] = field(default_factory=list)
     buffers: List[Buffer] = field(default_factory=list)
     cameras: List[Camera] = field(default_factory=list)
+    extensionsUsed: List[str] = field(default_factory=list)
+    extensionsRequired: List[str] = field(default_factory=list)
     images: List[Image] = field(default_factory=list)
     meshes: List[Mesh] = field(default_factory=list)
     materials: List[Material] = field(default_factory=list)

@@ -10,29 +10,54 @@ Python library for reading, writing and handling GLTF files. Python3.6+
 
 
 ## About
-The library tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
+This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
 
-The library was initially built to load and save simple meshes, support for materials and animations is experimental. 
+The library was initially built to load and save simple meshes but support for the entire spec, including materials 
+and animations is pretty good. 
 Check the table below for an idea of which sample models validate.
 
+Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 
 
 Roadmap:
-* Finishing building out schemas 
-* Validate sample models
-* Add helper functions
+* Add helper functions for creating meshes
+* Support for binary GLTF
 
 ## Install
+
+### PIP
+
 pip install pygltflib 
 
 or
 
 python -m pip install pygltflib
 
+
+### Source
+
+git clone https://gitlab.com/dodgyville/pygltflib
+
 ## Usage
 Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Kronos at:
 
 https://github.com/KhronosGroup/glTF-Sample-Models
+
+### Creating
+```python3
+>>> from pygltflib import GLTF2, Scene
+>>> gltf = GLTF2()
+>>> gltf.scene # no scene set by default
+>>> len(gltf.scenes)
+0
+
+>>> scene = Scene()
+>>> gltf.scenes.append(scene)
+>>> len(gltf.scenes)
+1
+```
+
+### Loading and saving
 
 ```python3
 >>> from pygltflib import GLTF2
@@ -71,55 +96,55 @@ Using sample models loaded and then saved using this library, here are validator
 | 2CylinderEngine | passes | 
 | AlphaBlendModeTest | passes | 
 | AnimatedCube | passes | 
-| AnimatedMorphCube |  | 
-| AnimatedMorphSphere |  | 
-| AnimatedTriangle |  | 
+| AnimatedMorphCube | passes | 
+| AnimatedMorphSphere | passes | 
+| AnimatedTriangle | passes | 
 | Avocado | passes | 
 | BarramundiFish | passes | 
-| BoomBox |  | 
-| BoomBoxWithAxes |  | 
+| BoomBox | passes | 
+| BoomBoxWithAxes | passes | 
 | Box | passes | 
 | BoxAnimated | passes | 
 | BoxInterleaved | passes | 
-| BoxTextured |  | 
+| BoxTextured | passes | 
 | BoxTexturedNonPowerOfTwo | passes | 
-| BoxVertexColors |  | 
+| BoxVertexColors | passes | 
 | BrainStem | passes | 
 | Buggy | passes | 
 | Cameras | passes | 
 | CesiumMan | passes | 
 | CesiumMilkTruck | passes | 
-| Corset |  | 
+| Corset | passes | 
 | Cube | passes | 
-| DamagedHelmet |  | 
+| DamagedHelmet | passes | 
 | Duck | passes | 
-| FlightHelmet |  | 
-| GearboxAssy |  | 
-| Lantern |  | 
-| MetalRoughSpheres |  | 
+| FlightHelmet | passes | 
+| GearboxAssy | passes | 
+| Lantern | passes | 
+| MetalRoughSpheres | passes | 
 | Monster | passes | 
-| MultiUVTest |  | 
-| NormalTangentMirrorTest |  | 
-| NormalTangentTest |  | 
+| MultiUVTest | passes | 
+| NormalTangentMirrorTest | passes | 
+| NormalTangentTest | passes | 
 | OrientationTest | passes | 
-| ReciprocatingSaw |  | 
+| ReciprocatingSaw | passes | 
 | RiggedFigure | passes | 
-| RiggedSimple |  | 
-| SciFiHelmet |  | 
+| RiggedSimple | passes | 
+| SciFiHelmet | passes | 
 | SimpleMeshes | passes | 
 | SimpleMorph | passes | 
 | SimpleSparseAccessor | passes | 
-| SpecGlossVsMetalRough |  | 
-| Sponza |  | 
-| Suzanne |  | 
+| SpecGlossVsMetalRough | passes | 
+| Sponza | passes | 
+| Suzanne | passes | 
 | TextureCoordinateTest | passes | 
 | TextureSettingsTest | passes | 
-| TextureTransformTest |  |
+| TextureTransformTest | passes |
 | Triangle | passes | 
-| TriangleWithoutIndices |  | 
+| TriangleWithoutIndices | passes | 
 | TwoSidedPlane | passes | 
-| VC |  | 
-| VertexColorTest |  | 
+| VC | passes | 
+| VertexColorTest | passes | 
 | WaterBottle | passes | 
 
 
