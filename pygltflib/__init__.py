@@ -88,11 +88,17 @@ class Attributes:
     JOINTS_0: int = None
     WEIGHTS_0: int = None
 
+@dataclass_json
+@dataclass
+class PrimitiveTarget: #TODO is this the same as Attributes?
+    POSITION: int = None
+
 
 @dataclass_json
 @dataclass
 class Primitive:
     attributes: Attributes = Attributes()
+    targets: List[PrimitiveTarget] = field(default_factory=list)
     indices: int = None
     mode: int = None
     material: int = None
@@ -102,6 +108,7 @@ class Primitive:
 @dataclass
 class Mesh:
     primitives: List[Primitive] = field(default_factory=list)
+    weights: List[float] = field(default_factory=list)
     name: str = None
 
 
