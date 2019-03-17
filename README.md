@@ -19,23 +19,31 @@ Check the table below for an idea of which sample models validate.
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 
 Contributors:
-Luke Miller
-Sebastian Höffner
+* Luke Miller
+* Sebastian Höffner
 
+
+Changelog:
+* 1.0 initial release.
+* 1.2 better json support, remove numpy requirement, suppress infer warning, basic default methods.
+* 1.3 basic support for reading binary GLTF (.glb) files.
 
 Roadmap:
 * Add helper functions for creating meshes
-* Support for binary GLTF
+* Full support for binary GLTF (.glb) files.
 
 ## Install
 
 ### PIP
 
-pip install pygltflib 
+##### Method 1
+`pip install pygltflib` 
 
-or
+##### Method 2
+`python -m pip install pygltflib`
 
-python -m pip install pygltflib
+##### Method 3
+`py -3 -m pip install pygltflib`
 
 
 ### Source
@@ -64,11 +72,15 @@ https://github.com/KhronosGroup/glTF-Sample-Models
 
 ### Loading and saving
 
+`pygltflib` can load json-based .GLTF files and binary .GLB files, based on the file extension.
+Support for *saving* files loaded from .GLB is currently not fully implemented. 
+
+#### GLTF files
+
 ```python3
 >>> from pygltflib import GLTF2
 >>> filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 >>> gltf = GLTF2().load(filename)
->>> gltf
 >>> gltf.scene
 0
 
@@ -86,6 +98,30 @@ Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
 
 >>> filename2 = "test.gltf"
 >>> gltf = GLTF2().save(filename2)
+
+```
+
+#### GLB files 
+
+```python3
+>>> from pygltflib import GLTF2
+>>> glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
+>>> glb = GLTF2().load(glb_filename)
+>>> glb.scene
+0
+
+>>> glb.scenes
+[Scene(name='', nodes=[0])]
+
+>>> glb.nodes[0]
+Node(mesh=0, name='AnimatedCube', rotation=[0.0, -1.0, 0.0, 0.0])
+
+>>> glb.nodes[0].name
+'AnimatedCube'
+
+>>> glb.meshes[0].primitives[0].attributes
+Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
+
 
 ```
 

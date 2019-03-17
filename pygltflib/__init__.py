@@ -29,6 +29,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
 
 from dataclasses_json.core import _decode_dataclass
 from datetime import date, datetime
+import struct
 import warnings
 
 import json
@@ -38,7 +39,7 @@ from typing import List, Dict
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 
 A = TypeVar('A')
@@ -68,6 +69,9 @@ WEIGHTS_0 = "WEIGHTS_0"
 
 PERSPECTIVE = "perspective"
 ORTHOGRAPHIC = "orthographic"
+
+JSON = "JSON"
+BIN = "BIN\x00"
 
 
 def json_serial(obj):
@@ -407,18 +411,65 @@ class GLTF2:
     def gltf_to_json(self) -> str:
         return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
-    def save(self, fname, asset=Asset()):
-        self.asset = asset
+    def _save_json(self, fname):
         with open(fname, "w") as f:
             f.write(self.gltf_to_json())
+
+    def save(self, fname, asset=Asset()):
+        self.asset = asset
+        _base, ext = os.path.splitext(fname)
+        if ext in [".glb"]:
+            warnings.warn("Unable to save in binary format (glb not implemented), saving as json.")
+        if hasattr(self, "_glb_data"):
+            warnings.warn("This file contains a binary blob loaded from a glb file, unable to save it to json file.")
+        self._save_json(fname)
         return True
+
+    def _load_json(self, fname):
+        with open(fname, "r") as f:
+            obj = GLTF2.from_json(f.read(), infer_missing=True)
+        return obj
+
+    def _load_binary(self, fname):
+        with open(fname, "rb") as f:
+            fileContent = f.read()
+            #obj = GLTF2.from_json(f.read(), infer_missing=True)
+        magic = struct.unpack("<BBBB", fileContent[:4])
+        version, length = struct.unpack("<II", fileContent[4:12])
+        warnings.warn("GLB binary file format can be loaded and explored using pygltflib "
+                      "but saving is only partially supported.")
+        if bytearray(magic).decode() != 'glTF':
+            raise IOError("Unable to load binary gltf file. Header does not appear to be valid glb format.")
+        if version > 2:
+            warnings.warn(f"pygltflib supports v2 of the binary gltf format, this file is version {version}, "
+                          "it may not import correctly.")
+        index = 12
+        i = 0
+        while index < length:
+            chunk_length = struct.unpack("<I", fileContent[index:index+4])[0]
+            index += 4
+            chunk_type = bytearray(struct.unpack("<BBBB", fileContent[index:index+4])).decode()
+            index += 4
+            if chunk_type not in [JSON, BIN]:
+                warnings.warn(f"ignoring chunk {i} with unknown type '{chunk_type}', probably glTF extensions")
+            elif chunk_type == JSON:
+                json = fileContent[index:index+chunk_length].decode("utf-8")
+                obj = GLTF2.from_json(json, infer_missing=True)
+            else:
+                self._glb_data = fileContent[index:index+chunk_length]
+            index += chunk_length
+            i += 1
+        return obj
 
     def load(self, fname):
         if not os.path.exists(fname):
             print("ERROR: File not found", fname)
             return None
-        with open(fname, "r") as f:
-            obj = GLTF2.from_json(f.read(), infer_missing=True)
+        _base, ext = os.path.splitext(fname)
+        if ext in [".bin", ".glb"]:
+            obj = self._load_binary(fname)
+        else:
+            obj = self._load_json(fname)
         return obj
 
     # some higher level helper functions
