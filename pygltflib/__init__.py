@@ -19,20 +19,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
-from dataclasses_json.core import _CollectionEncoder, _decode_dataclass
+
+try:
+    from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
+except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
+    from dataclasses_json.core import _CollectionEncoder as JsonEncoder
+
+from dataclasses_json.core import _decode_dataclass
 from datetime import date, datetime
 
 import json
-import numpy as np
-import os, os.path
-from typing import List, Dict, TextIO
+import os
+import os.path
+from typing import List, Dict
 from typing import Callable, Optional, Tuple, TypeVar, Union
 
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 
 A = TypeVar('A')
@@ -60,13 +65,15 @@ COLOR_0 = "COLOR_0"
 JOINTS_0 = "JOINTS_0"
 WEIGHTS_0 = "WEIGHTS_0"
 
+PERSPECTIVE = "perspective"
+ORTHOGRAPHIC = "orthographic"
+
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
-
 
 
 @dataclass_json
@@ -90,10 +97,10 @@ class Attributes:
     WEIGHTS_0: int = None
 
 
-#@dataclass_json
-#@dataclass
-#class PrimitiveTarget: #TODO is this the same as Attributes?
-#    POSITION: int = None
+# @dataclass_json
+# @dataclass
+# class PrimitiveTarget: #TODO is this the same as Attributes?
+#     POSITION: int = None
 
 
 @dataclass_json
@@ -116,7 +123,7 @@ class Mesh:
 
 @dataclass_json
 @dataclass
-class SparseAccessor: # TODO is this the same as Accessor
+class SparseAccessor:  # TODO is this the same as Accessor
     bufferView: int = None
     byteOffset: int = None
     componentType: int = None
@@ -126,7 +133,7 @@ class SparseAccessor: # TODO is this the same as Accessor
 @dataclass
 class Sparse:
     count: int = 0
-    indices: SparseAccessor = None # TODO this might be an Accessor but that would couple the classes
+    indices: SparseAccessor = None  # TODO this might be an Accessor but that would couple the classes
     values: SparseAccessor = None
 
 
@@ -189,7 +196,6 @@ class Camera:
     name: str = None
 
 
-
 @dataclass_json
 @dataclass
 class MaterialTexture:
@@ -209,7 +215,7 @@ class PbrMetallicRoughness:
 
 @dataclass_json
 @dataclass
-class Extension: # TODO: expand this out
+class Extension:  # TODO: expand this out
     pass
 
 
@@ -317,8 +323,8 @@ class GLTF2:
     extensionsUsed: List[str] = field(default_factory=list)
     extensionsRequired: List[str] = field(default_factory=list)
     images: List[Image] = field(default_factory=list)
-    meshes: List[Mesh] = field(default_factory=list)
     materials: List[Material] = field(default_factory=list)
+    meshes: List[Mesh] = field(default_factory=list)
     nodes: List[Node] = field(default_factory=list)
     samplers: List[Sampler] = field(default_factory=list)
     scene: int = None
@@ -365,7 +371,7 @@ class GLTF2:
             return d  # For convenience
         data = del_none(data)
         return json.dumps(data,
-                          cls=_CollectionEncoder,
+                          cls=JsonEncoder,
                           skipkeys=skipkeys,
                           ensure_ascii=ensure_ascii,
                           check_circular=check_circular,
@@ -392,6 +398,9 @@ class GLTF2:
                                  parse_int=parse_int,
                                  parse_constant=parse_constant,
                                  **kw)
+#        with warnings.catch_warnings():
+#            warnings.simplefilter("ignore", RuntimeWarning)
+#            result =
         return _decode_dataclass(cls, init_kwargs, infer_missing)
 
     def gltf_to_json(self) -> str:
@@ -411,12 +420,42 @@ class GLTF2:
             obj = GLTF2.from_json(f.read(), infer_missing=True)
         return obj
 
+    # some higher level helper functions
+    def add_node(self, node):
+        if self.scene is not None:
+            self.scenes[self.scene].nodes.append(len(self.nodes))
+        self.nodes.append(node)
+
+    def add_default_camera(self):
+        n = Node()
+        n.rotation = [0.0, 0.0, 0.0, 1]
+        n.translation = [-1.0, 0.0, 0.0]
+        n.name = "Camera"
+        n.camera = len(self.cameras)
+
+        self.add_node(n)
+        c = Camera()
+        c.type = PERSPECTIVE
+        c.perspective = Perspective()
+        c.perspective.aspectRatio = 1.5
+        c.perspective.yfov = 0.6
+        c.perspective.zfar = 1000
+        c.perspective.znear = 0.001
+        self.cameras.append(c)
+
+        return self
+
+    def add_default_scene(self):
+        s = Scene()
+        s.name = "Scene"
+        self.scene = 0
+        self.scenes.append(s)
+
 
 def main():
-    # print(GLTF2().gltf_to_json())
-    gltf = GLTF2().load("glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf")
-    #import doctest
-    #doctest.testfile("../README.md")
+    import doctest
+    doctest.testfile("../README.md")
+
 
 if __name__ == "__main__":
     main()

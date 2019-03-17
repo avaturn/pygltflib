@@ -55,6 +55,7 @@ https://github.com/KhronosGroup/glTF-Sample-Models
 >>> gltf.scenes.append(scene)
 >>> len(gltf.scenes)
 1
+
 ```
 
 ### Loading and saving

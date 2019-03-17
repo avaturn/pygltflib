@@ -38,6 +38,6 @@ class TestLoad(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    #unittest.main()
-    import doctest
-    doctest.testfile("README.md")
+    unittest.main()
+    #import doctest
+    #doctest.testfile("README.md")
