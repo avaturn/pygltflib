@@ -18,6 +18,10 @@ Check the table below for an idea of which sample models validate.
 
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 
+Contributors:
+Luke Miller
+Sebastian Höffner
+
 
 Roadmap:
 * Add helper functions for creating meshes
