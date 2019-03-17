@@ -29,6 +29,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
 
 from dataclasses_json.core import _decode_dataclass
 from datetime import date, datetime
+import warnings
 
 import json
 import os
@@ -398,10 +399,10 @@ class GLTF2:
                                  parse_int=parse_int,
                                  parse_constant=parse_constant,
                                  **kw)
-#        with warnings.catch_warnings():
-#            warnings.simplefilter("ignore", RuntimeWarning)
-#            result =
-        return _decode_dataclass(cls, init_kwargs, infer_missing)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            result = _decode_dataclass(cls, init_kwargs, infer_missing)
+        return result
 
     def gltf_to_json(self) -> str:
         return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
