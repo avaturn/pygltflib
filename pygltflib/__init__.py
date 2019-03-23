@@ -1,5 +1,8 @@
 """
-Copyright (c) 2018 Luke Miller
+pygltflib : A Python library for reading, writing and handling GLTF files.
+
+
+Copyright (c) 2018, 2019 Luke Miller
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,27 +22,28 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import base64
+import copy
 from dataclasses import dataclass, field, asdict
+from datetime import date, datetime
+import json
+import os
+from pathlib import Path
+from typing import List, Dict
+from typing import Callable, Optional, Tuple, TypeVar, Union
+import struct
+import warnings
+
 from dataclasses_json import dataclass_json
+from dataclasses_json.core import _decode_dataclass
 
 try:
     from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
-from dataclasses_json.core import _decode_dataclass
-from datetime import date, datetime
-import struct
-import warnings
 
-import json
-import os
-import os.path
-from typing import List, Dict
-from typing import Callable, Optional, Tuple, TypeVar, Union
-
-
-__version__ = "1.3"
+__version__ = "1.4"
 
 
 A = TypeVar('A')
@@ -165,6 +169,9 @@ class BufferView:
     byteStride: int = None
     target: int = None
     name: str = None
+
+    def __lt__(self, other):
+        return self.byteOffset < other.byteOffset
 
 
 @dataclass_json
@@ -412,32 +419,98 @@ class GLTF2:
         return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
     def _save_json(self, fname):
-        with open(fname, "w") as f:
+        path = Path(fname)
+        original_buffers = copy.deepcopy(self.buffers)
+        for buffer in self.buffers:
+            if buffer.uri == '':  # save glb_data as bin file
+                buffer.uri = str(Path(path.stem).with_suffix(".bin"))  # update the buffer uri to point to our new local bin file
+                with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
+                    f.write(self._glb_data)
+
+        with open(path, "w") as f:
             f.write(self.gltf_to_json())
+
+        self.buffers = original_buffers  # restore buffers
+        return True
+
+    def _save_binary(self, fname):
+        version = 2
+        with open(fname, 'wb') as f:
+            # setup
+
+            buffer_blob = b''
+            original_buffer_views = copy.deepcopy(self.bufferViews)
+            original_buffers = copy.deepcopy(self.buffers)
+
+            offset = 0
+            new_buffer = Buffer()
+            path = getattr(self, "_path", Path())
+            self.bufferViews.sort()
+            for i, bufferView in enumerate(self.bufferViews):
+                buffer = self.buffers[bufferView.buffer]
+                if buffer.uri == '':  # assume loaded from glb binary file
+                    data = self._glb_data
+                elif Path(path.parent, buffer.uri).is_file():
+                    with open(Path(path.parent, buffer.uri), 'rb') as fb:
+                        data = fb.read()
+                else:
+                    warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping.")
+                    continue
+                buffer_blob += data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength]
+                offset += bufferView.byteLength
+
+                bufferView.byteOffset = offset
+                bufferView.buffer = 0
+
+            new_buffer.byteLength = len(buffer_blob)
+            self.buffers = [new_buffer]
+
+            json_blob = self.gltf_to_json().encode("utf-8")
+            length = 12 + 8 + len(json_blob) + 8 + len(buffer_blob)
+            self.bufferViews = original_buffer_views  # restore unpacked bufferViews
+            self.buffers = original_buffers  # restore unpacked buffers
+
+            # header
+            f.write(b'glTF')
+            f.write(struct.pack('<I', version))
+            f.write(struct.pack('<I', length))
+
+            # json chunk
+            f.write(struct.pack('<I', len(json_blob)))
+            f.write(bytes(JSON, 'utf-8'))
+            f.write(json_blob)
+
+            # buffer chunk
+            f.write(struct.pack('<I', len(buffer_blob)))
+            f.write(bytes(BIN, 'utf-8'))
+            # TODO This chunk must be padded with trailing zeros (0x00) to satisfy alignment requirements.
+            f.write(buffer_blob)
+
+        return True
 
     def save(self, fname, asset=Asset()):
         self.asset = asset
-        _base, ext = os.path.splitext(fname)
-        if ext in [".glb"]:
-            warnings.warn("Unable to save in binary format (glb not implemented), saving as json.")
-        if hasattr(self, "_glb_data"):
-            warnings.warn("This file contains a binary blob loaded from a glb file, unable to save it to json file.")
-        self._save_json(fname)
-        return True
+        ext = Path(fname).suffix
+        if ext.lower() in [".glb"]:
+            return self._save_binary(fname)
+        else:
+            if hasattr(self, "_glb_data"):
+                warnings.warn(
+                    "This file contains a binary blob loaded from a .glb file, and this will be saved to a .bin file next to the json file.")
+            return self._save_json(fname)
 
-    def _load_json(self, fname):
+    @staticmethod
+    def _load_json(fname):
         with open(fname, "r") as f:
             obj = GLTF2.from_json(f.read(), infer_missing=True)
         return obj
 
-    def _load_binary(self, fname):
+    @staticmethod
+    def _load_binary(fname):
         with open(fname, "rb") as f:
-            fileContent = f.read()
-            #obj = GLTF2.from_json(f.read(), infer_missing=True)
-        magic = struct.unpack("<BBBB", fileContent[:4])
-        version, length = struct.unpack("<II", fileContent[4:12])
-        warnings.warn("GLB binary file format can be loaded and explored using pygltflib "
-                      "but saving is only partially supported.")
+            data = f.read()
+        magic = struct.unpack("<BBBB", data[:4])
+        version, length = struct.unpack("<II", data[4:12])
         if bytearray(magic).decode() != 'glTF':
             raise IOError("Unable to load binary gltf file. Header does not appear to be valid glb format.")
         if version > 2:
@@ -445,63 +518,49 @@ class GLTF2:
                           "it may not import correctly.")
         index = 12
         i = 0
+        obj = None
         while index < length:
-            chunk_length = struct.unpack("<I", fileContent[index:index+4])[0]
+            chunk_length = struct.unpack("<I", data[index:index+4])[0]
             index += 4
-            chunk_type = bytearray(struct.unpack("<BBBB", fileContent[index:index+4])).decode()
+            chunk_type = bytearray(struct.unpack("<BBBB", data[index:index+4])).decode()
             index += 4
             if chunk_type not in [JSON, BIN]:
                 warnings.warn(f"ignoring chunk {i} with unknown type '{chunk_type}', probably glTF extensions")
             elif chunk_type == JSON:
-                json = fileContent[index:index+chunk_length].decode("utf-8")
-                obj = GLTF2.from_json(json, infer_missing=True)
+                raw_json = data[index:index+chunk_length].decode("utf-8")
+                obj = GLTF2.from_json(raw_json, infer_missing=True)
             else:
-                self._glb_data = fileContent[index:index+chunk_length]
+                obj._glb_data = data[index:index+chunk_length]
             index += chunk_length
             i += 1
+        if not obj:
+            return obj
+
+        # in a GLB there is only one buffer. It has no uri and it is currently held in self._glb_data
+        # the views for breaking up glb_data are in bufferViews.
+        """
+        new_buffers = []
+        for i, bufferView in enumerate(obj.bufferViews):
+            bufferView.byteOffset
+            bufferView.buffer = i
+            bufferView.byteOffset = 0
+            new_buffer = Buffer()
+        """
+
         return obj
 
     def load(self, fname):
-        if not os.path.exists(fname):
+        path = Path(fname)
+        if not path.is_file():
             print("ERROR: File not found", fname)
             return None
-        _base, ext = os.path.splitext(fname)
-        if ext in [".bin", ".glb"]:
+        ext = path.suffix
+        if ext.lower() in [".bin", ".glb"]:
             obj = self._load_binary(fname)
         else:
             obj = self._load_json(fname)
+        obj._path = path
         return obj
-
-    # some higher level helper functions
-    def add_node(self, node):
-        if self.scene is not None:
-            self.scenes[self.scene].nodes.append(len(self.nodes))
-        self.nodes.append(node)
-
-    def add_default_camera(self):
-        n = Node()
-        n.rotation = [0.0, 0.0, 0.0, 1]
-        n.translation = [-1.0, 0.0, 0.0]
-        n.name = "Camera"
-        n.camera = len(self.cameras)
-
-        self.add_node(n)
-        c = Camera()
-        c.type = PERSPECTIVE
-        c.perspective = Perspective()
-        c.perspective.aspectRatio = 1.5
-        c.perspective.yfov = 0.6
-        c.perspective.zfar = 1000
-        c.perspective.znear = 0.001
-        self.cameras.append(c)
-
-        return self
-
-    def add_default_scene(self):
-        s = Scene()
-        s.name = "Scene"
-        self.scene = 0
-        self.scenes.append(s)
 
 
 def main():
