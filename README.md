@@ -8,6 +8,7 @@ Python library for reading, writing and handling GLTF files. Python3.6+
 * dataclasses-json
 * pytest (optional)
 
+It requires python 3.6 and above because it uses dataclasses and all attributes are type hinted.
 
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
@@ -21,19 +22,23 @@ Check the table below for an idea of which sample models validate.
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 We are very interested in hearing your use cases for `pygltflib` to help drive the roadmap.
 
-######Roadmap:
+###### Roadmap:
 * Add helper functions for creating meshes
 * Full support for binary GLTF (.glb) files
 * Reject file overwrites unless overwrite flag set
 * Give options on storing binary buffers (embedded vs external)
 
 
-######Contributors:
+###### Contributors:
 * Luke Miller
 * Sebastian Höffner
+* Arthur van Hoff
 
 
-######Changelog:
+###### Changelog:
+* 1.5
+    * align embedded data correctly
+    * add `def glb2gltf` and `def gltf2glb` util functions to `pygltflib.utils` for easy file conversion
 * 1.4 
     * basic support for saving to binary GLTF (.glb) files
     * moved undocumented non-core methods to `pygltfib.utils`
@@ -67,7 +72,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `git clone https://gitlab.com/dodgyville/pygltflib`
 
 ## Usage
-Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Kronos at:
+Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Khronos at:
 
 https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -139,6 +144,8 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 ```
 
 #### Converting files
+
+##### First method
 ```python3
 >>> from pygltflib import GLTF2
 
@@ -147,8 +154,19 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 >>> glb.save("test.gltf")
 
 >>> # convert gltf to glb
->>> glb = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
->>> glb.save("test.glb")
+>>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+>>> gltf.save("test.glb")
+
+```
+
+##### Second method using utils
+```python3
+>>> from pygltflib.utils import glb2gltf, gltf2glb
+>>> # convert glb to gltf
+>>> glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
+
+>>> # convert gltf to glb
+>>> gltf2glb("glTF-Sample-Models/2.0/Box/glTF/Box.gltf", "test.glb", override=True)
 
 
 ```
@@ -160,7 +178,7 @@ Using sample models loaded and then saved using this library, here are validator
 
 
 #### Validator Status
-| Model | Validator |
+| Model | gltf2gltf Validator |
 | ------| ------- |
 | 2CylinderEngine | passes |
 | AlphaBlendModeTest | passes |

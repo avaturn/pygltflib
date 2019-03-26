@@ -22,12 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-import base64
 import copy
 from dataclasses import dataclass, field, asdict
 from datetime import date, datetime
 import json
-import os
 from pathlib import Path
 from typing import List, Dict
 from typing import Callable, Optional, Tuple, TypeVar, Union
@@ -43,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.4"
+__version__ = "1.5"
 
 
 A = TypeVar('A')
@@ -457,15 +455,18 @@ class GLTF2:
                     warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping.")
                     continue
                 buffer_blob += data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength]
-                offset += bufferView.byteLength
 
                 bufferView.byteOffset = offset
                 bufferView.buffer = 0
+                offset += bufferView.byteLength
 
             new_buffer.byteLength = len(buffer_blob)
             self.buffers = [new_buffer]
 
             json_blob = self.gltf_to_json().encode("utf-8")
+            if len(json_blob) % 4 != 0:
+                json_blob = json_blob + b'   '[0:4 - len(json_blob) % 4]
+
             length = 12 + 8 + len(json_blob) + 8 + len(buffer_blob)
             self.bufferViews = original_buffer_views  # restore unpacked bufferViews
             self.buffers = original_buffers  # restore unpacked buffers

@@ -1,5 +1,5 @@
 """
-utils.py : A collection of functions for manipulating GLTF2 objects.
+pygltflib.utils.py : A collection of functions for manipulating GLTF2 objects.
 
 
 Copyright (c) 2018, 2019 Luke Miller
@@ -23,8 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from . import *
+import pathlib
 import warnings
+
+from . import *
 
 
 # some higher level helper functions
@@ -64,3 +66,45 @@ def add_default_scene(gltf):
     gltf.scene = 0
     gltf.scenes.append(s)
     return gltf
+
+
+def gltf2glb(source, destination=None, override=False):
+    """
+    Save a .gltf file as its .glb equivalent.
+
+    Args:
+        source (str): Path to existing .gltf file.
+        destination Optional(str): Filename to write to (default is to use existing filename as base)
+        override: Override existing file.
+
+    """
+    path = Path(source)
+    if not destination:
+        destination = path.with_suffix(".glb")
+    else:
+        destination = Path(destination)
+    if destination.is_file() and override is False:
+        raise FileExistsError
+    else:
+        GLTF2().load(str(path))._save_binary(str(destination))
+
+
+def glb2gltf(source, destination=None, override=False):
+    """
+    Save a .glb file as its .gltf equivalent.
+
+    Args:
+        source (str): Path to existing .glb file.
+        destination Optional(str): Filename to write to (default is to use existing filename as base)
+        override: Override existing file.
+
+    """
+    path = Path(source)
+    if not destination:
+        destination = path.with_suffix(".gltf")
+    else:
+        destination = Path(destination)
+    if destination.is_file() and override is False:
+        raise FileExistsError
+    else:
+        GLTF2().load(str(path))._save_json(str(destination))
