@@ -41,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.5"
+__version__ = "1.6"
 
 
 A = TypeVar('A')
@@ -74,6 +74,10 @@ ORTHOGRAPHIC = "orthographic"
 
 JSON = "JSON"
 BIN = "BIN\x00"
+MAGIC = b'glTF'
+GLTF_VERSION = 2  # version this library exports
+GLTF_MIN_VERSION = 2   # minimum version this library can load
+GLTF_MAX_VERSION = 2   # maximum supported version this library can load
 
 
 def json_serial(obj):
@@ -169,7 +173,9 @@ class BufferView:
     name: str = None
 
     def __lt__(self, other):
-        return self.byteOffset < other.byteOffset
+        offset_first = self.byteOffset if self.byteOffset is not None else 0
+        offset_second = other.byteOffset if other.byteOffset is not None else 0
+        return offset_first < offset_second
 
 
 @dataclass_json
@@ -416,12 +422,13 @@ class GLTF2:
     def gltf_to_json(self) -> str:
         return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
 
-    def _save_json(self, fname):
+    def save_json(self, fname):
         path = Path(fname)
         original_buffers = copy.deepcopy(self.buffers)
         for buffer in self.buffers:
             if buffer.uri == '':  # save glb_data as bin file
-                buffer.uri = str(Path(path.stem).with_suffix(".bin"))  # update the buffer uri to point to our new local bin file
+                # update the buffer uri to point to our new local bin file
+                buffer.uri = str(Path(path.stem).with_suffix(".bin"))
                 with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
                     f.write(self._glb_data)
 
@@ -431,8 +438,7 @@ class GLTF2:
         self.buffers = original_buffers  # restore buffers
         return True
 
-    def _save_binary(self, fname):
-        version = 2
+    def save_binary(self, fname):
         with open(fname, 'wb') as f:
             # setup
 
@@ -452,9 +458,11 @@ class GLTF2:
                     with open(Path(path.parent, buffer.uri), 'rb') as fb:
                         data = fb.read()
                 else:
-                    warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping.")
+                    warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping. "
+                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     continue
-                buffer_blob += data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength]
+                byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0
+                buffer_blob += data[byte_offset:byte_offset + bufferView.byteLength]
 
                 bufferView.byteOffset = offset
                 bufferView.buffer = 0
@@ -464,16 +472,23 @@ class GLTF2:
             self.buffers = [new_buffer]
 
             json_blob = self.gltf_to_json().encode("utf-8")
-            if len(json_blob) % 4 != 0:
-                json_blob = json_blob + b'   '[0:4 - len(json_blob) % 4]
 
-            length = 12 + 8 + len(json_blob) + 8 + len(buffer_blob)
+            # pad each blob if needed
+            if len(json_blob) % 4 != 0:
+                json_blob += b'   '[0:4 - len(json_blob) % 4]
+
+            if len(buffer_blob) % 4 != 0:
+                buffer_blob += b'   '[0:4 - len(buffer_blob) % 4]
+
+            version = struct.pack('<I', GLTF_VERSION)
+            chunk_header_len = 8
+            length = len(MAGIC) + len(version) + 4 + chunk_header_len * 2 + len(json_blob) + len(buffer_blob)
             self.bufferViews = original_buffer_views  # restore unpacked bufferViews
             self.buffers = original_buffers  # restore unpacked buffers
 
             # header
-            f.write(b'glTF')
-            f.write(struct.pack('<I', version))
+            f.write(MAGIC)
+            f.write(version)
             f.write(struct.pack('<I', length))
 
             # json chunk
@@ -484,7 +499,6 @@ class GLTF2:
             # buffer chunk
             f.write(struct.pack('<I', len(buffer_blob)))
             f.write(bytes(BIN, 'utf-8'))
-            # TODO This chunk must be padded with trailing zeros (0x00) to satisfy alignment requirements.
             f.write(buffer_blob)
 
         return True
@@ -493,30 +507,33 @@ class GLTF2:
         self.asset = asset
         ext = Path(fname).suffix
         if ext.lower() in [".glb"]:
-            return self._save_binary(fname)
+            return self.save_binary(fname)
         else:
             if hasattr(self, "_glb_data"):
                 warnings.warn(
-                    "This file contains a binary blob loaded from a .glb file, and this will be saved to a .bin file next to the json file.")
-            return self._save_json(fname)
+                    "This file contains a binary blob loaded from a .glb file, "
+                    "and this will be saved to a .bin file next to the json file.")
+            return self.save_json(fname)
 
     @staticmethod
-    def _load_json(fname):
+    def load_json(fname):
         with open(fname, "r") as f:
             obj = GLTF2.from_json(f.read(), infer_missing=True)
         return obj
 
     @staticmethod
-    def _load_binary(fname):
+    def load_binary(fname):
         with open(fname, "rb") as f:
             data = f.read()
         magic = struct.unpack("<BBBB", data[:4])
         version, length = struct.unpack("<II", data[4:12])
-        if bytearray(magic).decode() != 'glTF':
+        if bytearray(magic) != MAGIC:
             raise IOError("Unable to load binary gltf file. Header does not appear to be valid glb format.")
-        if version > 2:
-            warnings.warn(f"pygltflib supports v2 of the binary gltf format, this file is version {version}, "
-                          "it may not import correctly.")
+        if version > GLTF_MAX_VERSION:
+            warnings.warn(f"pygltflib supports v{GLTF_MAX_VERSION} of the binary gltf format, "
+                          "this file is version {version}, "
+                          "it may not import correctly. "
+                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         index = 12
         i = 0
         obj = None
@@ -526,7 +543,8 @@ class GLTF2:
             chunk_type = bytearray(struct.unpack("<BBBB", data[index:index+4])).decode()
             index += 4
             if chunk_type not in [JSON, BIN]:
-                warnings.warn(f"ignoring chunk {i} with unknown type '{chunk_type}', probably glTF extensions")
+                warnings.warn(f"Ignoring chunk {i} with unknown type '{chunk_type}', probably glTF extensions. "
+                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
             elif chunk_type == JSON:
                 raw_json = data[index:index+chunk_length].decode("utf-8")
                 obj = GLTF2.from_json(raw_json, infer_missing=True)
@@ -557,9 +575,9 @@ class GLTF2:
             return None
         ext = path.suffix
         if ext.lower() in [".bin", ".glb"]:
-            obj = self._load_binary(fname)
+            obj = self.load_binary(fname)
         else:
-            obj = self._load_json(fname)
+            obj = self.load_json(fname)
         obj._path = path
         return obj
 

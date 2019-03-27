@@ -87,6 +87,7 @@ def gltf2glb(source, destination=None, override=False):
         raise FileExistsError
     else:
         GLTF2().load(str(path))._save_binary(str(destination))
+    return True
 
 
 def glb2gltf(source, destination=None, override=False):
@@ -108,3 +109,4 @@ def glb2gltf(source, destination=None, override=False):
         raise FileExistsError
     else:
         GLTF2().load(str(path))._save_json(str(destination))
+    return True

@@ -8,7 +8,7 @@ Python library for reading, writing and handling GLTF files. Python3.6+
 * dataclasses-json
 * pytest (optional)
 
-It requires python 3.6 and above because it uses dataclasses and all attributes are type hinted.
+It requires python 3.6 and above because it uses dataclasses and all attributes are type hinted. And f-strings, plenty of f-strings.
 
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
@@ -36,19 +36,22 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 
 ###### Changelog:
+* 1.6
+    * provide better support for binary (.glb) files (bug fixes)
+    * promote `load_json`, `load_binary`, `save_json` and `save_binary` from internal methods 
 * 1.5
     * align embedded data correctly
     * add `def glb2gltf` and `def gltf2glb` util functions to `pygltflib.utils` for easy file conversion
 * 1.4 
-    * basic support for saving to binary GLTF (.glb) files
-    * moved undocumented non-core methods to `pygltfib.utils`
+    * add basic support for saving to binary GLTF (.glb) files
+    * move undocumented non-core methods to `pygltfib.utils`
 * 1.3 
-    * basic support for reading binary GLTF (.glb) files
+    * add basic support for reading binary GLTF (.glb) files
 * 1.2 
-    * better json support
+    * provide better json support
     * remove numpy requirement
     * suppress infer warning
-    * basic default methods
+    * add basic default methods
 * 1.0 
     * initial release
 
@@ -178,19 +181,19 @@ Using sample models loaded and then saved using this library, here are validator
 
 
 #### Validator Status
-| Model | gltf2gltf Validator |
-| ------| ------- |
-| 2CylinderEngine | passes |
-| AlphaBlendModeTest | passes |
-| AnimatedCube | passes |
-| AnimatedMorphCube | passes |
-| AnimatedMorphSphere | passes |
-| AnimatedTriangle | passes |
-| Avocado | passes |
+| Model | gltf to gltf | gltf to glb | 
+| ------| ------- | ------- |
+| 2CylinderEngine | passes | fail |
+| AlphaBlendModeTest | passes | fail | 
+| AnimatedCube | passes | passes |
+| AnimatedMorphCube | passes |  passes |
+| AnimatedMorphSphere | passes |  passes |
+| AnimatedTriangle | passes |  fail |
+| Avocado | passes |  passes 
 | BarramundiFish | passes |
 | BoomBox | passes |
 | BoomBoxWithAxes | passes |
-| Box | passes |
+| Box | passes | fail
 | BoxAnimated | passes |
 | BoxInterleaved | passes |
 | BoxTextured | passes |
@@ -198,13 +201,13 @@ Using sample models loaded and then saved using this library, here are validator
 | BoxVertexColors | passes |
 | BrainStem | passes |
 | Buggy | passes |
-| Cameras | passes |
+| Cameras | passes | passes
 | CesiumMan | passes |
 | CesiumMilkTruck | passes |
 | Corset | passes |
-| Cube | passes |
-| DamagedHelmet | passes |
-| Duck | passes |
+| Cube | passes | passes 
+| DamagedHelmet | passes | passes
+| Duck | passes | fail | 
 | FlightHelmet | passes |
 | GearboxAssy | passes |
 | Lantern | passes |
@@ -215,9 +218,9 @@ Using sample models loaded and then saved using this library, here are validator
 | NormalTangentTest | passes |
 | OrientationTest | passes |
 | ReciprocatingSaw | passes |
-| RiggedFigure | passes |
-| RiggedSimple | passes |
-| SciFiHelmet | passes |
+| RiggedFigure | passes |  fail |
+| RiggedSimple | passes |  fail |
+| SciFiHelmet | passes |  passes |
 | SimpleMeshes | passes |
 | SimpleMorph | passes |
 | SimpleSparseAccessor | passes |
@@ -225,14 +228,14 @@ Using sample models loaded and then saved using this library, here are validator
 | Sponza | passes |
 | Suzanne | passes |
 | TextureCoordinateTest | passes |
-| TextureSettingsTest | passes |
+| TextureSettingsTest | passes | fail |
 | TextureTransformTest | passes |
 | Triangle | passes |
 | TriangleWithoutIndices | passes |
 | TwoSidedPlane | passes |
 | VC | passes |
 | VertexColorTest | passes |
-| WaterBottle | passes |
+| WaterBottle | passes | passes | 
 
 
 ### unittests
