@@ -36,12 +36,15 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 
 ###### Changelog:
+* 1.7
+    * preserve order of bufferViews when saving to glb
+    * pad binary chunks within embedded data correctly
 * 1.6
     * provide better support for binary (.glb) files (bug fixes)
     * promote `load_json`, `load_binary`, `save_json` and `save_binary` from internal methods 
 * 1.5
     * align embedded data correctly
-    * add `def glb2gltf` and `def gltf2glb` util functions to `pygltflib.utils` for easy file conversion
+    * add `glb2gltf` and `gltf2glb` util functions to `pygltflib.utils` for easy file conversion
 * 1.4 
     * add basic support for saving to binary GLTF (.glb) files
     * move undocumented non-core methods to `pygltfib.utils`
@@ -181,63 +184,65 @@ Using sample models loaded and then saved using this library, here are validator
 
 
 #### Validator Status
-| Model | gltf to gltf | gltf to glb | 
-| ------| ------- | ------- |
-| 2CylinderEngine | passes | fail |
-| AlphaBlendModeTest | passes | fail | 
-| AnimatedCube | passes | passes |
-| AnimatedMorphCube | passes |  passes |
+| Model | gltf to gltf | gltf to glb | glb to gltf | glb to glb | 
+| ------| ------- | ------- | ------- | ------ |
+| 2CylinderEngine | passes | passes | passes | 
+| AlphaBlendModeTest | passes | passes | fails |
+| AnimatedCube | passes | passes | no glb available | no glb available|
+| AnimatedMorphCube | passes |  passes | passes |
 | AnimatedMorphSphere | passes |  passes |
-| AnimatedTriangle | passes |  fail |
-| Avocado | passes |  passes 
-| BarramundiFish | passes |
-| BoomBox | passes |
-| BoomBoxWithAxes | passes |
-| Box | passes | fail
-| BoxAnimated | passes |
-| BoxInterleaved | passes |
-| BoxTextured | passes |
-| BoxTexturedNonPowerOfTwo | passes |
-| BoxVertexColors | passes |
-| BrainStem | passes |
-| Buggy | passes |
-| Cameras | passes | passes
-| CesiumMan | passes |
-| CesiumMilkTruck | passes |
-| Corset | passes |
-| Cube | passes | passes 
+| AnimatedTriangle | passes |  passes | no glb available | no glb available|
+| Avocado | passes |  passes | fails |
+| BarramundiFish | passes | passes | fails
+| BoomBox | passes | passes | fails
+| BoomBoxWithAxes | passes | passes | no glb available | no glb available|
+| Box | passes | passes
+| BoxAnimated | passes | passes
+| BoxInterleaved | passes | passes | 
+| BoxTextured | passes | passes
+| BoxTexturedNonPowerOfTwo | passes | passes
+| BoxVertexColors | passes | passes 
+| BrainStem | passes | passes | passes
+| Buggy | passes | passes | passes
+| Cameras | passes | passes | no glb available | no glb available|
+| CesiumMan | passes | passes
+| CesiumMilkTruck | passes | passes
+| Corset | passes | passes |
+| Cube | passes | passes | no glb available | no glb available|
 | DamagedHelmet | passes | passes
-| Duck | passes | fail | 
-| FlightHelmet | passes |
-| GearboxAssy | passes |
-| Lantern | passes |
-| MetalRoughSpheres | passes |
-| Monster | passes |
-| MultiUVTest | passes |
-| NormalTangentMirrorTest | passes |
-| NormalTangentTest | passes |
-| OrientationTest | passes |
-| ReciprocatingSaw | passes |
-| RiggedFigure | passes |  fail |
-| RiggedSimple | passes |  fail |
-| SciFiHelmet | passes |  passes |
-| SimpleMeshes | passes |
-| SimpleMorph | passes |
-| SimpleSparseAccessor | passes |
-| SpecGlossVsMetalRough | passes |
-| Sponza | passes |
-| Suzanne | passes |
-| TextureCoordinateTest | passes |
-| TextureSettingsTest | passes | fail |
-| TextureTransformTest | passes |
-| Triangle | passes |
-| TriangleWithoutIndices | passes |
-| TwoSidedPlane | passes |
-| VC | passes |
-| VertexColorTest | passes |
+| Duck | passes | passes | 
+| FlightHelmet | passes | passes | no glb available | no glb available|
+| GearboxAssy | passes | passes
+| Lantern | passes | passes |
+| MetalRoughSpheres | passes | passes | 
+| Monster | passes | passes
+| MultiUVTest | passes | passes
+| NormalTangentMirrorTest | passes | passes
+| NormalTangentTest | passes | passes |
+| OrientationTest | passes | passes |
+| ReciprocatingSaw | passes | passes |
+| RiggedFigure | passes |  passes |
+| RiggedSimple | passes |  passes |
+| SciFiHelmet | passes |  passes | no glb available | no glb available|
+| SimpleMeshes | passes | passes | no glb available | no glb available|
+| SimpleMorph | passes | passes |
+| SimpleSparseAccessor | passes | passes | no glb available | no glb available 
+| SpecGlossVsMetalRough | passes | passes | fails
+| Sponza | passes | passes | no glb available | no glb available|
+| Suzanne | passes | passes | no glb available | no glb available|
+| TextureCoordinateTest | passes | passes | 
+| TextureSettingsTest | passes | passes |
+| TextureTransformTest | passes | passes | 
+| Triangle | passes | passes | no glb available | no glb available|
+| TriangleWithoutIndices | passes | passes | no glb available | no glb available|
+| TwoSidedPlane | passes | passes | no glb available | no glb available|
+| VC | passes | fails
+| VertexColorTest | passes | passes
 | WaterBottle | passes | passes | 
 
 
 ### unittests
 `pytest tests.py`
     
+### Thanks
+`pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 

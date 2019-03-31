@@ -41,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.6"
+__version__ = "1.7"
 
 
 A = TypeVar('A')
@@ -171,11 +171,6 @@ class BufferView:
     byteStride: int = None
     target: int = None
     name: str = None
-
-    def __lt__(self, other):
-        offset_first = self.byteOffset if self.byteOffset is not None else 0
-        offset_second = other.byteOffset if other.byteOffset is not None else 0
-        return offset_first < offset_second
 
 
 @dataclass_json
@@ -449,7 +444,6 @@ class GLTF2:
             offset = 0
             new_buffer = Buffer()
             path = getattr(self, "_path", Path())
-            self.bufferViews.sort()
             for i, bufferView in enumerate(self.bufferViews):
                 buffer = self.buffers[bufferView.buffer]
                 if buffer.uri == '':  # assume loaded from glb binary file
@@ -462,11 +456,16 @@ class GLTF2:
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     continue
                 byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0
-                buffer_blob += data[byte_offset:byte_offset + bufferView.byteLength]
+                byte_length = bufferView.byteLength
+                if byte_length % 4 != 0:  # pad each segment of binary blob
+                    byte_length += 4 - byte_length % 4
+
+                buffer_blob += data[byte_offset:byte_offset + byte_length]
 
                 bufferView.byteOffset = offset
+                bufferView.byteLength = byte_length
                 bufferView.buffer = 0
-                offset += bufferView.byteLength
+                offset += byte_length
 
             new_buffer.byteLength = len(buffer_blob)
             self.buffers = [new_buffer]
@@ -476,9 +475,6 @@ class GLTF2:
             # pad each blob if needed
             if len(json_blob) % 4 != 0:
                 json_blob += b'   '[0:4 - len(json_blob) % 4]
-
-            if len(buffer_blob) % 4 != 0:
-                buffer_blob += b'   '[0:4 - len(buffer_blob) % 4]
 
             version = struct.pack('<I', GLTF_VERSION)
             chunk_header_len = 8
@@ -557,6 +553,7 @@ class GLTF2:
 
         # in a GLB there is only one buffer. It has no uri and it is currently held in self._glb_data
         # the views for breaking up glb_data are in bufferViews.
+        # TODO: Give option to put data into buffers
         """
         new_buffers = []
         for i, bufferView in enumerate(obj.bufferViews):

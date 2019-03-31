@@ -40,6 +40,26 @@ class TestValidator:
         assert gltf.accessors[4].bufferView == 4
 
 
+class TestOutput:
+    def test_Box(self):
+        """ Load a GLB saved by us from the original GLTF"""
+        fname = pathlib.Path("validator/Box_gltf.glb")
+        gltf = GLTF2().load(fname)
+        assert gltf.asset.version == "2.0"
+        assert gltf.accessors[0].bufferView == 0
+        assert gltf.accessors[4].bufferView == 4
+
+    def test_Box(self):
+        """ Load a GLB saved by us from the original GLTF"""
+        fname = pathlib.Path("validator/AnimatedTriangle_gltf.glb")
+        gltf = GLTF2().load(fname)
+        assert gltf.asset.version == "2.0"
+        assert gltf.accessors[0].bufferView == 0
+        assert gltf.accessors[4].bufferView == 4
+
+
+
+
 class TestConversion:
     def setup_method(self, _test_method):
         path = pathlib.Path(PATH)
