@@ -36,6 +36,8 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 
 ###### Changelog:
+* 1.8
+    * allow images to point to bufferViews
 * 1.7
     * preserve order of bufferViews when saving to glb
     * pad binary chunks within embedded data correctly
@@ -187,18 +189,18 @@ Using sample models loaded and then saved using this library, here are validator
 | Model | gltf to gltf | gltf to glb | glb to gltf | glb to glb | 
 | ------| ------- | ------- | ------- | ------ |
 | 2CylinderEngine | passes | passes | passes | 
-| AlphaBlendModeTest | passes | passes | fails |
+| AlphaBlendModeTest | passes | passes | passes |
 | AnimatedCube | passes | passes | no glb available | no glb available|
 | AnimatedMorphCube | passes |  passes | passes |
-| AnimatedMorphSphere | passes |  passes |
+| AnimatedMorphSphere | passes |  passes | passes | passes
 | AnimatedTriangle | passes |  passes | no glb available | no glb available|
-| Avocado | passes |  passes | fails |
-| BarramundiFish | passes | passes | fails
-| BoomBox | passes | passes | fails
+| Avocado | passes |  passes | passes | passes
+| BarramundiFish | passes | passes | passes
+| BoomBox | passes | passes | passes
 | BoomBoxWithAxes | passes | passes | no glb available | no glb available|
 | Box | passes | passes
 | BoxAnimated | passes | passes
-| BoxInterleaved | passes | passes | 
+| BoxInterleaved | passes | passes | | passes
 | BoxTextured | passes | passes
 | BoxTexturedNonPowerOfTwo | passes | passes
 | BoxVertexColors | passes | passes 
@@ -209,25 +211,25 @@ Using sample models loaded and then saved using this library, here are validator
 | CesiumMilkTruck | passes | passes
 | Corset | passes | passes |
 | Cube | passes | passes | no glb available | no glb available|
-| DamagedHelmet | passes | passes
-| Duck | passes | passes | 
+| DamagedHelmet | passes | passes | passes | passes
+| Duck | passes | passes | passes | passes
 | FlightHelmet | passes | passes | no glb available | no glb available|
 | GearboxAssy | passes | passes
 | Lantern | passes | passes |
 | MetalRoughSpheres | passes | passes | 
 | Monster | passes | passes
 | MultiUVTest | passes | passes
-| NormalTangentMirrorTest | passes | passes
-| NormalTangentTest | passes | passes |
+| NormalTangentMirrorTest | passes | passes | 
+| NormalTangentTest | passes | passes | | passes
 | OrientationTest | passes | passes |
 | ReciprocatingSaw | passes | passes |
 | RiggedFigure | passes |  passes |
 | RiggedSimple | passes |  passes |
 | SciFiHelmet | passes |  passes | no glb available | no glb available|
 | SimpleMeshes | passes | passes | no glb available | no glb available|
-| SimpleMorph | passes | passes |
+| SimpleMorph | passes | passes | no glb available | no glb available|
 | SimpleSparseAccessor | passes | passes | no glb available | no glb available 
-| SpecGlossVsMetalRough | passes | passes | fails
+| SpecGlossVsMetalRough | passes | passes | passes | passes
 | Sponza | passes | passes | no glb available | no glb available|
 | Suzanne | passes | passes | no glb available | no glb available|
 | TextureCoordinateTest | passes | passes | 
@@ -236,9 +238,9 @@ Using sample models loaded and then saved using this library, here are validator
 | Triangle | passes | passes | no glb available | no glb available|
 | TriangleWithoutIndices | passes | passes | no glb available | no glb available|
 | TwoSidedPlane | passes | passes | no glb available | no glb available|
-| VC | passes | fails
-| VertexColorTest | passes | passes
-| WaterBottle | passes | passes | 
+| VC | passes | *fails* | passes | passes
+| VertexColorTest | passes | passes | passes  | passes
+| WaterBottle | passes | passes | passes | passes
 
 
 ### unittests

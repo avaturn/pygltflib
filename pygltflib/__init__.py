@@ -41,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.7"
+__version__ = "1.8"
 
 
 A = TypeVar('A')
@@ -299,6 +299,8 @@ class Texture:
 @dataclass
 class Image:
     uri: str = None
+    mimeType: str = None
+    bufferView: int = None
 
 
 @dataclass_json

@@ -57,7 +57,18 @@ class TestOutput:
         assert gltf.accessors[0].bufferView == 0
         assert gltf.accessors[4].bufferView == 4
 
+    def test_Avocado(self):
+        """ Load a GLB saved by us from the original GLTF"""
+        fname = pathlib.Path(PATH).joinpath("2.0/Avocado/glTF/Avocado.gltf")
+        gltf = GLTF2().load(fname)
+        gltf.save("validator/Avocado_gltf.glb")
 
+        fname = pathlib.Path(PATH).joinpath("2.0/Avocado/glTF-Binary/Avocado.glb")
+        glb = GLTF2().load(fname)
+
+        fname = pathlib.Path("validator/Avocado_gltf.glb")
+        glbnew = GLTF2().load(fname)
+        assert glb.asset.version == "2.0"
 
 
 class TestConversion:
