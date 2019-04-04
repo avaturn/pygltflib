@@ -41,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.8"
+__version__ = "1.9"
 
 
 A = TypeVar('A')
@@ -59,6 +59,13 @@ VEC4 = "VEC4"
 MAT2 = "MAT2"
 MAT3 = "MAT3"
 MAT4 = "MAT4"
+
+BYTE = 5120  # 1
+UNSIGNED_BYTE = 5121  # 1
+SHORT = 5122  # 2
+UNSIGNED_SHORT = 5123   # 2
+UNSIGNED_INT = 5125  # 4
+FLOAT = 5126  # 4
 
 POSITION = "POSITION"
 NORMAL = "NORMAL"
@@ -117,7 +124,7 @@ class Attributes:
 @dataclass_json
 @dataclass
 class Primitive:
-    attributes: Attributes = Attributes()
+    attributes: Attributes = field(default_factory=Attributes)
     indices: int = None
     mode: int = None
     material: int = None
@@ -329,7 +336,7 @@ class Animation:
 class GLTF2:
     accessors: List[Accessor] = field(default_factory=list)
     animations: List[Animation] = field(default_factory=list)
-    asset: Asset = Asset()
+    asset: Asset = field(default_factory=Asset)
     bufferViews: List[BufferView] = field(default_factory=list)
     buffers: List[Buffer] = field(default_factory=list)
     cameras: List[Camera] = field(default_factory=list)
@@ -448,6 +455,10 @@ class GLTF2:
             path = getattr(self, "_path", Path())
             for i, bufferView in enumerate(self.bufferViews):
                 buffer = self.buffers[bufferView.buffer]
+                if bufferView.byteStride and bufferView.byteStride > 0:
+                    warnings.warn(
+                        f"padding based on bufferView.byteStride is unsupported and may result in corrupted output. "
+                        "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 if buffer.uri == '':  # assume loaded from glb binary file
                     data = self._glb_data
                 elif Path(path.parent, buffer.uri).is_file():

@@ -11,6 +11,7 @@ To run:
 import pathlib
 
 from pygltflib import GLTF2
+from pygltflib.utils import add_primitive
 
 PATH = "glTF-Sample-Models"
 
@@ -112,3 +113,9 @@ class TestConversion:
         assert gltfed.buffers[0].uri == "test.bin"
         assert gltfed.bufferViews == gltf.bufferViews
 
+
+
+class TestUtils:
+    def test_add_primitive(self):
+        add_primitive(None)
+        pass
