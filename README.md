@@ -33,9 +33,13 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Luke Miller
 * Sebastian Höffner
 * Arthur van Hoff
-
+* Arifullah Jan
 
 ###### Changelog:
+* 1.10
+    * handle empty buffers on save
+    * warn about unsupported data uri bufferViews
+    * allow transparent textures (with alpha channel)
 * 1.9
     * use factories to create Attributes and Asset objects
 * 1.8
@@ -102,67 +106,67 @@ https://github.com/KhronosGroup/glTF-Sample-Models
 ```
 ##### A simple mesh
 ```python3
-    from pygltflib import *
-    
-    # create gltf objects for a scene with a primitive triangle with indexed geometery
-    gltf = GLTF2()
-    scene = Scene()
-    mesh = Mesh()
-    primitive = Primitive()
-    node = Node()
-    buffer = Buffer()
-    bufferView1 = BufferView()
-    bufferView2 = BufferView()
-    accessor1 = Accessor()
-    accessor2 = Accessor()
+from pygltflib import *
 
-    # add data
-    buffer.uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
-    buffer.byteLength = 44
+# create gltf objects for a scene with a primitive triangle with indexed geometry
+gltf = GLTF2()
+scene = Scene()
+mesh = Mesh()
+primitive = Primitive()
+node = Node()
+buffer = Buffer()
+bufferView1 = BufferView()
+bufferView2 = BufferView()
+accessor1 = Accessor()
+accessor2 = Accessor()
 
-    bufferView1.buffer = 0
-    bufferView1.byteOffset = 0
-    bufferView1.byteLength = 6
-    bufferView1.target = 34963
+# add data
+buffer.uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+buffer.byteLength = 44
 
-    bufferView2.buffer = 0
-    bufferView2.byteOffset = 8
-    bufferView2.byteLength = 36
-    bufferView2.target = 34962
+bufferView1.buffer = 0
+bufferView1.byteOffset = 0
+bufferView1.byteLength = 6
+bufferView1.target = 34963
 
-    accessor1.bufferView = 0
-    accessor1.byteOffset = 0
-    accessor1.componentType = UNSIGNED_SHORT
-    accessor1.count = 3
-    accessor1.type = SCALAR
-    accessor1.max = [2]
-    accessor1.min = [0]
+bufferView2.buffer = 0
+bufferView2.byteOffset = 8
+bufferView2.byteLength = 36
+bufferView2.target = 34962
 
-    accessor2.bufferView = 1
-    accessor2.byteOffset = 0
-    accessor2.componentType = FLOAT
-    accessor2.count = 3
-    accessor2.type = VEC3
-    accessor2.max = [1.0, 1.0, 0.0]
-    accessor2.min = [0.0, 0.0, 0.0]
+accessor1.bufferView = 0
+accessor1.byteOffset = 0
+accessor1.componentType = UNSIGNED_SHORT
+accessor1.count = 3
+accessor1.type = SCALAR
+accessor1.max = [2]
+accessor1.min = [0]
 
-    primitive.attributes.POSITION = 1
-    node.mesh = 0
-    scene.nodes = [0]
+accessor2.bufferView = 1
+accessor2.byteOffset = 0
+accessor2.componentType = FLOAT
+accessor2.count = 3
+accessor2.type = VEC3
+accessor2.max = [1.0, 1.0, 0.0]
+accessor2.min = [0.0, 0.0, 0.0]
 
-    # assemble into a gltf structure
-    gltf.scenes.append(scene)
-    gltf.meshes.append(mesh)
-    gltf.meshes[0].primitives.append(primitive)
-    gltf.nodes.append(node)
-    gltf.buffers.append(buffer)
-    gltf.bufferViews.append(bufferView1)
-    gltf.bufferViews.append(bufferView2)
-    gltf.accessors.append(accessor1)
-    gltf.accessors.append(accessor2)
+primitive.attributes.POSITION = 1
+node.mesh = 0
+scene.nodes = [0]
 
-    # save to file
-    gltf.save("triangle.gltf")
+# assemble into a gltf structure
+gltf.scenes.append(scene)
+gltf.meshes.append(mesh)
+gltf.meshes[0].primitives.append(primitive)
+gltf.nodes.append(node)
+gltf.buffers.append(buffer)
+gltf.bufferViews.append(bufferView1)
+gltf.bufferViews.append(bufferView2)
+gltf.accessors.append(accessor1)
+gltf.accessors.append(accessor2)
+
+# save to file
+gltf.save("triangle.gltf")
 
 
 ```
@@ -252,23 +256,24 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 ### Status of gltf-validator
 Using sample models loaded and then saved using this library, here are validator reports (blank is untested). 
+If available, The result of a visual inspection is in brackets next to the validator result. 
 
 
 #### Validator Status
 | Model | gltf to gltf | gltf to glb | glb to gltf | glb to glb | 
 | ------| ------- | ------- | ------- | ------ |
-| 2CylinderEngine | passes | passes | passes | 
-| AlphaBlendModeTest | passes | passes | passes |
+| 2CylinderEngine | passes | passes | passes | passes
+| AlphaBlendModeTest | passes | passes | passes | passes
 | AnimatedCube | passes | passes | no glb available | no glb available|
-| AnimatedMorphCube | passes |  passes | passes |
+| AnimatedMorphCube | passes |  passes | passes | passes
 | AnimatedMorphSphere | passes |  passes | passes | passes
 | AnimatedTriangle | passes |  passes | no glb available | no glb available|
 | Avocado | passes |  passes | passes | passes
-| BarramundiFish | passes | passes | passes
-| BoomBox | passes | passes | passes
+| BarramundiFish | passes | passes | passes | passes
+| BoomBox | passes | passes | passes | passes
 | BoomBoxWithAxes | passes | passes | no glb available | no glb available|
-| Box | passes | passes
-| BoxAnimated | passes | passes
+| Box | passes | passes | passes | passes
+| BoxAnimated | passes | passes | passes
 | BoxInterleaved | passes | passes | | passes
 | BoxTextured | passes | passes
 | BoxTexturedNonPowerOfTwo | passes | passes
@@ -278,7 +283,7 @@ Using sample models loaded and then saved using this library, here are validator
 | Cameras | passes | passes | no glb available | no glb available|
 | CesiumMan | passes | passes
 | CesiumMilkTruck | passes | passes
-| Corset | passes | passes |
+| Corset | passes | passes | passes | passes |
 | Cube | passes | passes | no glb available | no glb available|
 | DamagedHelmet | passes | passes | passes | passes
 | Duck | passes | passes | passes | passes
@@ -301,9 +306,9 @@ Using sample models loaded and then saved using this library, here are validator
 | SpecGlossVsMetalRough | passes | passes | passes | passes
 | Sponza | passes | passes | no glb available | no glb available|
 | Suzanne | passes | passes | no glb available | no glb available|
-| TextureCoordinateTest | passes | passes | 
-| TextureSettingsTest | passes | passes |
-| TextureTransformTest | passes | passes | 
+| TextureCoordinateTest | passes | passes | passes | passes
+| TextureSettingsTest | passes | passes | passes | passes
+| TextureTransformTest | passes | passes | no glb available | no glb available| 
 | Triangle | passes | passes | no glb available | no glb available|
 | TriangleWithoutIndices | passes | passes | no glb available | no glb available|
 | TwoSidedPlane | passes | passes | no glb available | no glb available|

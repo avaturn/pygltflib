@@ -41,7 +41,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.9"
+__version__ = "1.10.0"
 
 
 A = TypeVar('A')
@@ -91,7 +91,18 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
+
     raise TypeError("Type %s not serializable" % type(obj))
+
+
+# glTF uses a right-handed coordinate system, that is, the cross product of +X and +Y yields +Z. glTF defines +Y as up.
+# The front of a glTF asset faces +Z.
+#
+# The units for all linear distances are meters.
+#
+# All angles are in radians.
+#
+# Positive rotation is counterclockwise.
 
 
 @dataclass_json
@@ -245,6 +256,9 @@ class Material:
     occlusionTexture: MaterialTexture = None
     emissiveFactor: List[float] = field(default_factory=list)
     emissiveTexture: MaterialTexture = None
+    alphaMode: str = None
+    alphaCutoff: float = None
+    doubleSided: bool = None
     name: str = None
     extensions: Dict[str, Extension] = field(default_factory=dict)
 
@@ -429,12 +443,16 @@ class GLTF2:
     def save_json(self, fname):
         path = Path(fname)
         original_buffers = copy.deepcopy(self.buffers)
-        for buffer in self.buffers:
+        for i, buffer in enumerate(self.buffers):
             if buffer.uri == '':  # save glb_data as bin file
                 # update the buffer uri to point to our new local bin file
-                buffer.uri = str(Path(path.stem).with_suffix(".bin"))
-                with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
-                    f.write(self._glb_data)
+                glb_data = getattr(self, "_glb_data", None)
+                if glb_data:
+                    buffer.uri = str(Path(path.stem).with_suffix(".bin"))
+                    with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
+                        f.write(glb_data)
+                else:
+                    warnings.warn(f"buffer {i} is empty: {buffer}")
 
         with open(path, "w") as f:
             f.write(self.gltf_to_json())
@@ -464,6 +482,10 @@ class GLTF2:
                 elif Path(path.parent, buffer.uri).is_file():
                     with open(Path(path.parent, buffer.uri), 'rb') as fb:
                         data = fb.read()
+                elif buffer.uri.startswith("data"):
+                    warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:40]} to glb, "
+                                  "please save in gltf format instead."
+                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 else:
                     warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping. "
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")

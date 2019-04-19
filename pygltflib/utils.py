@@ -68,6 +68,27 @@ def add_default_scene(gltf):
     return gltf
 
 
+def add_camera(gltf, rotation, translation, scale):
+    warnings.warn("pygltf.utils.add_camera is a provisional function and may not exist in future versions.")
+    n = Node()
+    n.rotation = rotation
+    n.translation = translation
+    n.scale = scale
+    n.name = "Camera"
+    n.camera = len(gltf.cameras)
+
+    gltf.add_node(n)
+    c = Camera()
+    c.type = PERSPECTIVE
+    c.perspective = Perspective()
+    c.perspective.aspectRatio = 1.5
+    c.perspective.yfov = 0.6
+    c.perspective.zfar = 1000
+    c.perspective.znear = 0.001
+    gltf.cameras.append(c)
+    return gltf
+
+
 def add_primitive(_gltf):
     warnings.warn("pygltf.utils.add_primitive is a provisional function and may not exist in future versions.")
 
@@ -128,10 +149,10 @@ def add_primitive(_gltf):
     gltf.bufferViews.append(bufferView2)
     gltf.accessors.append(accessor1)
     gltf.accessors.append(accessor2)
-
     # save to file
-    gltf.save("primitive.gltf")
+    # gltf.save("primitive.glb")
 
+    return gltf
 
 
 def gltf2glb(source, destination=None, override=False):
@@ -140,8 +161,8 @@ def gltf2glb(source, destination=None, override=False):
 
     Args:
         source (str): Path to existing .gltf file.
-        destination Optional(str): Filename to write to (default is to use existing filename as base)
-        override: Override existing file.
+        destination (Optional(str)): Filename to write to (default is to use existing filename as base)
+        override (bool): Override existing file.
 
     """
     path = Path(source)
@@ -152,7 +173,7 @@ def gltf2glb(source, destination=None, override=False):
     if destination.is_file() and override is False:
         raise FileExistsError
     else:
-        GLTF2().load(str(path))._save_binary(str(destination))
+        GLTF2().load(str(path)).save_binary(str(destination))
     return True
 
 
@@ -162,8 +183,8 @@ def glb2gltf(source, destination=None, override=False):
 
     Args:
         source (str): Path to existing .glb file.
-        destination Optional(str): Filename to write to (default is to use existing filename as base)
-        override: Override existing file.
+        destination (Optional(str)): Filename to write to (default is to use existing filename as base)
+        override (bool): Override existing file.
 
     """
     path = Path(source)
@@ -174,5 +195,5 @@ def glb2gltf(source, destination=None, override=False):
     if destination.is_file() and override is False:
         raise FileExistsError
     else:
-        GLTF2().load(str(path))._save_json(str(destination))
+        GLTF2().load(str(path)).save_json(str(destination))
     return True
