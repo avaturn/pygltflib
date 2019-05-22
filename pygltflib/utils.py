@@ -23,13 +23,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import base64
+from struct import calcsize
 import pathlib
 import warnings
+from enum import Enum
+
 
 from . import *
 
 
+class BufferFormat(Enum):
+    DATAURI = "data uri"
+    BINARYBLOB = "binary blob"
+    FILEPATH = "file path"
+
+
+DATA_URI_HEADER = "data:application/octet-stream;base64,"
+
 # some higher level helper functions
+
 
 def add_node(gltf, node):
     warnings.warn("pygltf.utils.add_node is a provisional function and may not exist in future versions.")
@@ -89,6 +102,173 @@ def add_camera(gltf, rotation, translation, scale):
     return gltf
 
 
+def uri2vectors(uri):
+    base64.b64decode(uri[len('data:application/octet-stream;base64,'):])
+
+
+def indices_and_vertices_to_gltf(gltf, indices, vertices):
+    pass
+
+
+def get_accessor_for_bufferview(gltf, bufferview=0):
+    warnings.warn("pygltf.utils.get_accessor_for_bufferview is a provisional function and may not exist in future versions.")
+    for accessor in gltf.accessors:
+        if accessor.bufferView == bufferview:
+            return accessor
+    return None
+
+def get_bufferview_for_accessor(gltf, accessor):
+    warnings.warn("pygltf.utils.get_accessor_for_bufferview is a provisional function and may not exist in future versions.")
+    #bufferview =
+    for bufferview in gltf.accessors:
+        if accessor.bufferView == bufferview:
+            return accessor
+    return None
+
+
+def unpackURI(gltf, buffer_index=0):
+    """ Unpack a data uri of a primitive with indexed geometry
+
+    Args:
+        gltf (GLTF2): a gltf object containing indexed geometry
+        buffer_index: the index pointing to the buffer to unpack in gltf.buffers
+
+    Returns:
+        indices, vertices (List(Any)): List of indices that point to elements in the list of vertices (also returned)
+        """
+
+    warnings.warn("pygltf.utils.unpackURI is a provisional function and may not exist in future versions.")
+
+    start = 'data:application/octet-stream;base64,'
+    buffer = gltf.buffers[buffer_index]
+    if not buffer.uri.startswith(start):
+        warnings.warn(f"buffer {buffer_index} does not appear to be a data uri.")
+        return {}
+    data = base64.b64decode(buffer.uri[len(start):])
+    if len(data) != buffer.byteLength:
+        warnings.warn(f"buffer {buffer_index} is not the expected length.")
+    indices = []
+    vertices = []
+    for i, accessor in enumerate(gltf.accessors):
+        buffer_view = gltf.bufferViews[accessor.bufferView]
+        chunk = data[buffer_view.byteOffset:buffer_view.byteOffset + buffer_view.byteLength]
+        if buffer_view.buffer != buffer_index:
+            continue
+        supported = {
+            UNSIGNED_SHORT: "H",
+            FLOAT: "f",
+
+        }
+        unpack = supported[accessor.componentType] * accessor.count  # one record in this data set
+        size = calcsize(unpack)  # size of one record
+        num_of_vals = buffer_view.byteLength//size  # num of records in this chunk
+        for j in range(0, num_of_vals):
+            v = struct.unpack(unpack, chunk[j*size:(j*size)+size])
+            if buffer_view.target == ELEMENT_ARRAY_BUFFER:  # index data (unsigned shorts)
+                indices.append(v)
+            elif buffer_view.target == ARRAY_BUFFER:  # vertex data (floats)
+                vertices.append(v)
+            else:
+                warnings.warn(f"bufferview {i} doesn't seem relevant to indexed vertices")
+    return indices, vertices
+
+
+def add_indexed_geometry(gltf, indices, vertices):
+    """
+    Add a primitive object to the GLTF that is a list of indices and vertices.
+    eg a triangle with indices [(0, 1, 2)] and vertices [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    """
+    buffer = Buffer()
+    bufferView1 = BufferView()  # indices buffer view
+    bufferView2 = BufferView()  # vertices buffer view
+    accessor1 = Accessor()
+    accessor2 = Accessor()
+
+    mesh = Mesh()
+    primitive = Primitive()
+    node = Node()
+
+    # add to gltf
+    gltf.meshes.append(mesh)
+    gltf.meshes[-1].primitives.append(primitive)
+    gltf.nodes.append(node)
+    gltf.buffers.append(buffer)
+    gltf.bufferViews.append(bufferView1)
+    gltf.bufferViews.append(bufferView2)
+    gltf.accessors.append(accessor1)
+    gltf.accessors.append(accessor2)
+
+    bufferview1_index = len(gltf.bufferViews)-2
+    bufferview2_index = len(gltf.bufferViews)-1
+    buffer_index = len(gltf.buffers) - 1
+    node_index = len(gltf.nodes)-1
+
+    # accessor for indices
+    accessor1.bufferView = bufferview1_index
+    accessor1.byteOffset = 0
+    accessor1.componentType = UNSIGNED_SHORT
+    accessor1.count = 3
+    accessor1.type = SCALAR
+    accessor1.max = [2]
+    accessor1.min = [0]
+
+    # accessor for vertices
+    accessor2.bufferView = bufferview2_index
+    accessor2.byteOffset = 0
+    accessor2.componentType = FLOAT
+    accessor2.count = 3
+    accessor2.type = VEC3
+    accessor2.max = [1.0, 1.0, 0.0]
+    accessor2.min = [0.0, 0.0, 0.0]
+
+    primitive.attributes.POSITION = 1
+    node.mesh = 0
+    scene = None
+    if not gltf.scenes:
+        warnings.warn("Adding primitive to GLTF but there is no scene. You may want to add one.")
+    if len(gltf.scenes)>1:
+        warnings.warn("Multiple scenes found, adding to most recent one.")
+        scene = gltf.scenes[-1]
+
+    if scene:
+        if not scene.nodes:
+            scene.nodes = [node_index]
+        else:
+            scene.nodes.append(node_index)
+
+    # add the data
+    stream = "data:application/octet-stream;base64,"
+    buffer.uri = stream  # first part of the datastream is set up
+
+    chunk = b""
+    pack = "<HHH"
+    for v in indices:
+        chunk += struct.pack(pack, *v)
+
+    bufferView1.buffer = buffer_index
+    bufferView1.byteOffset = 0
+    byte_length = bufferView1.byteLength = len(chunk)
+    bufferView1.target = ELEMENT_ARRAY_BUFFER
+    buffer.uri += base64.b64encode(chunk).decode("utf-8")  # add to data stream
+
+    byte_length += 4 - byte_length % 4  # pad to next chunk
+
+    chunk = b""
+    pack = "<fff"
+    for v in vertices:
+        chunk += struct.pack(pack, *v)
+
+    # record_size = byte_length * num_of_fields
+    bufferView2.buffer = buffer_index
+    bufferView2.byteOffset = byte_length
+    bufferView2.byteLength = len(chunk)
+    bufferView2.target = ARRAY_BUFFER
+    buffer.uri += base64.b64encode(chunk).decode("utf-8")  # add vertices to data stream
+
+    buffer.byteLength = bufferView2.byteOffset + bufferView2.byteLength
+    return True
+
+
 def add_primitive(_gltf):
     warnings.warn("pygltf.utils.add_primitive is a provisional function and may not exist in future versions.")
 
@@ -113,12 +293,12 @@ def add_primitive(_gltf):
     bufferView1.buffer = 0
     bufferView1.byteOffset = 0
     bufferView1.byteLength = 6
-    bufferView1.target = 34963
+    bufferView1.target = ELEMENT_ARRAY_BUFFER
 
     bufferView2.buffer = 0
     bufferView2.byteOffset = 8
     bufferView2.byteLength = 36
-    bufferView2.target = 34962
+    bufferView2.target = ARRAY_BUFFER
 
     accessor1.bufferView = 0
     accessor1.byteOffset = 0
@@ -151,7 +331,7 @@ def add_primitive(_gltf):
     gltf.accessors.append(accessor2)
     # save to file
     # gltf.save("primitive.glb")
-
+    unpackURI(gltf, 0)
     return gltf
 
 
@@ -197,3 +377,93 @@ def glb2gltf(source, destination=None, override=False):
     else:
         GLTF2().load(str(path)).save_json(str(destination))
     return True
+
+
+def identify_buffer_format(gltf, buffer):
+    """
+    Identify the format of the requested buffer.
+
+    Returns
+        buffer_type (str), data (binary data)
+    """
+    path = getattr(gltf, "_path", Path())
+
+    buffer_format = None
+    data = None
+
+    if buffer.uri == '':  # assume loaded from glb binary file
+        data = gltf._glb_data
+        buffer_format = BufferFormat.BINARYBLOB
+        if len(gltf.buffers) > 1:
+            warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
+                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+    elif Path(path.parent, buffer.uri).is_file():
+        with open(Path(path.parent, buffer.uri), 'rb') as fb:
+            data = fb.read()
+        buffer_format = BufferFormat.FILEPATH
+    elif buffer.uri.startswith("data"):
+        data = buffer.uri.split(DATA_URI_HEADER)[1]
+        data = base64.decodebytes(bytes(data, "utf8"))
+        buffer_format = BufferFormat.DATAURI
+    else:
+        warnings.warn("pygltf.utils.identify_buffer_format can not identify buffer."
+                      "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+    return buffer_format, data
+
+
+def buffer_to_uri(gltf, buffer):
+    """ convert buffer to uri:data """
+    buffer_format, data = identify_buffer_format(gltf, buffer)
+
+    if buffer_format == BufferFormat.DATAURI:
+        warnings.warn(f"Buffer is already in data uri format")
+        return
+    elif buffer_format == BufferFormat.FILEPATH:
+        warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
+
+    # convert buffer
+    data = base64.b64encode(data).decode('utf-8')
+    buffer.uri = f'{DATA_URI_HEADER}{data}'
+    gltf._glb_data = None  # free up any binary blob floating around
+
+
+def buffers_to_uri(gltf):
+    """ Convert all buffers to """
+    for buffer in gltf.buffers:
+        buffer_to_uri(gltf, buffer)
+
+
+def buffer_to_glb_blob(gltf, buffer):
+    """ Convert buffer to a glb-friendly format """
+    buffer_format, data = identify_buffer_format(gltf, buffer)
+
+    if buffer_format == BufferFormat.BINARYBLOB:
+        warnings.warn(f"Buffer is already in binary blob format")
+        return
+    elif buffer_format == BufferFormat.FILEPATH:
+        warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
+
+    gltf._glb_data = data
+    buffer.uri = ''
+
+
+def buffer_to_binary_file(gltf, buffer_index):
+    """ Convert buffer to a format pointing to a binary file """
+    buffer = gltf.buffers[buffer_index]
+    buffer_format, data = identify_buffer_format(gltf, buffer)
+
+    if buffer_format == BufferFormat.FILEPATH:
+        warnings.warn(f"Buffer is already in data file format")
+        return
+
+    path = getattr(gltf, "_path", Path())
+
+    if data:
+        buffer.uri = str(Path(f"{path.stem}{buffer_index}").with_suffix(".bin"))
+        with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
+            f.write(data)
+
+
+def buffers_to_binary_files(gltf):
+    for buffer_index in range(len(gltf.buffers)):
+        buffer_to_binary_file(gltf, buffer_index)

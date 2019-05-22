@@ -63,9 +63,13 @@ MAT4 = "MAT4"
 BYTE = 5120  # 1
 UNSIGNED_BYTE = 5121  # 1
 SHORT = 5122  # 2
-UNSIGNED_SHORT = 5123   # 2
+UNSIGNED_SHORT = 5123   # 2 unsigned short (2 bytes)
 UNSIGNED_INT = 5125  # 4
-FLOAT = 5126  # 4
+FLOAT = 5126  # 4 single precision float (4 bytes)
+
+# The bufferView target that the GPU buffer should be bound to.
+ARRAY_BUFFER = 34962  # eg vertex data
+ELEMENT_ARRAY_BUFFER = 34963  # eg index data
 
 POSITION = "POSITION"
 NORMAL = "NORMAL"
@@ -487,7 +491,7 @@ class GLTF2:
                                   "please save in gltf format instead."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 else:
-                    warnings.warn(f"Unable to save bufferView {buffer.uri} to glb, skipping. "
+                    warnings.warn(f"Unable to save bufferView {buffer.uri[:50]} to glb, skipping. "
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     continue
                 byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0

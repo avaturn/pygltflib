@@ -127,12 +127,12 @@ buffer.byteLength = 44
 bufferView1.buffer = 0
 bufferView1.byteOffset = 0
 bufferView1.byteLength = 6
-bufferView1.target = 34963
+bufferView1.target = ELEMENT_ARRAY_BUFFER
 
 bufferView2.buffer = 0
 bufferView2.byteOffset = 8
 bufferView2.byteLength = 36
-bufferView2.target = 34962
+bufferView2.target = ARRAY_BUFFER
 
 accessor1.bufferView = 0
 accessor1.byteOffset = 0
