@@ -22,9 +22,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import base64
 import copy
 from dataclasses import dataclass, field, asdict
 from datetime import date, datetime
+from enum import Enum
 import json
 from pathlib import Path
 from typing import List, Dict
@@ -89,6 +91,14 @@ MAGIC = b'glTF'
 GLTF_VERSION = 2  # version this library exports
 GLTF_MIN_VERSION = 2   # minimum version this library can load
 GLTF_MAX_VERSION = 2   # maximum supported version this library can load
+
+DATA_URI_HEADER = "data:application/octet-stream;base64,"
+
+
+class BufferFormat(Enum):
+    DATAURI = "data uri"
+    BINARYBLOB = "binary blob"
+    FILEPATH = "file path"
 
 
 def json_serial(obj):
@@ -370,8 +380,145 @@ class GLTF2:
     skins: List[Skin] = field(default_factory=list)
     textures: List[Texture] = field(default_factory=list)
 
-    # to_json and from_json from dataclasses_json
-    # courtesy https://github.com/lidatong/dataclasses-json
+    def binary_blob(self):
+        """ Get the binary blob associated with glb files if available
+
+            Returns
+                (bytes): binary data
+        """
+        return getattr(self, "_glb_data", None)
+
+    def destroy_binary_blob(self):
+        if hasattr(self, "_glb_data"):
+            self._glb_data = None
+
+    def load_file_uri(self, uri):
+        """
+        Loads a file pointed to by a uri
+        """
+        path = getattr(self, "_path", Path())
+        with open(Path(path.parent, uri), 'rb') as fb:
+            data = fb.read()
+        return data
+
+    def decode_data_uri(self, uri):
+        """
+        Decodes the binary portion of a data uri.
+        """
+        data = uri.split(DATA_URI_HEADER)[1]
+        data = base64.decodebytes(bytes(data, "utf8"))
+        return data
+
+    def identify_uri(self, uri):
+        """
+        Identify the format of the requested buffer. File, data or binary blob.
+
+        Returns
+            buffer_type (str)
+        """
+        path = getattr(self, "_path", Path())
+        uri_format = None
+
+        if uri == '':  # assume loaded from glb binary file
+            uri_format = BufferFormat.BINARYBLOB
+            if len(self.buffers) > 1:
+                warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
+                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+        elif Path(path.parent, uri).is_file():
+            uri_format = BufferFormat.FILEPATH
+        elif uri.startswith("data"):
+            uri_format = BufferFormat.DATAURI
+        else:
+            warnings.warn("pygltf.GLTF.identify_buffer_format can not identify buffer."
+                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+        return uri_format
+
+    def buffer_to_uri(self, buffer):
+        """ Convert a buffer to uri:data """
+        buffer_format = self.identify_uri(buffer.uri)
+
+        if buffer_format == BufferFormat.DATAURI:
+            warnings.warn(f"Buffer is already in data uri format")
+            return
+        elif buffer_format == BufferFormat.FILEPATH:
+            warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
+            data = self.load_file_uri(buffer.uri)
+        elif buffer_format == BufferFormat.BINARYBLOB:
+            data = self.binary_blob()
+
+        # convert buffer
+        data = base64.b64encode(data).decode('utf-8')
+        buffer.uri = f'{DATA_URI_HEADER}{data}'
+        self.destroy_binary_blob()  # free up any binary blob floating around
+
+    def buffers_to_uris(self):
+        """ Convert all buffers to uri:data type buffers"""
+        for buffer in self.buffers:
+            self.buffer_to_uri(buffer)
+
+    def buffer_to_binary_blob(self, buffer):
+        """ Convert buffer to a glb-friendly format """
+        buffer_format = self.identify_uri(buffer.uri)
+        data = None
+
+        if buffer_format == BufferFormat.BINARYBLOB:
+            warnings.warn(f"Buffer is already in binary blob format")
+            return
+        elif buffer_format == BufferFormat.FILEPATH:
+            warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
+            data = self.load_file_uri(buffer.uri)
+        elif buffer_format == BufferFormat.DATAURI:
+            data = self.decode_data_uri(buffer.uri)
+
+        self._glb_data = data
+        buffer.uri = ''
+
+    def buffers_to_binary_blob(self):
+        """ Convert all buffers to a glb-friendly format"""
+        if len(self.buffers) > 1:
+            warnings.warn("pygltflib currently unable to convert multiple buffers to a single binary blob."
+                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+            return
+        for buffer in self.buffers:
+            self.buffer_to_binary_blob(buffer)
+
+    def buffer_to_file(self, buffer, filename=None, override=False):
+        """ Convert buffer to a format pointing to a binary file """
+        buffer_format = self.identify_uri(buffer.uri)
+
+        if buffer_format == BufferFormat.FILEPATH:
+            warnings.warn(f"Buffer is already in data file format")
+            return
+        elif buffer_format == BufferFormat.DATAURI:
+            data = self.decode_data_uri(buffer.uri)
+        elif buffer_format == BufferFormat.BINARYBLOB:
+            data = self.binary_blob()
+
+        if filename:
+            path = Path(filename)
+        else:
+            path = getattr(self, "_path", Path("buffer"))
+
+        if data:
+            buffer.uri = str(path)
+            if path.is_file() and not override:
+                warnings.warn(f"Unable to write buffer file, a file already exists at {path}")
+            with open(path, "wb") as f:  # save bin file with the gltf file
+                f.write(data)
+
+    def buffers_to_files(self, filename=None, override=False):
+        """
+        In the case of multiple buffers, filename will have the buffer ID inserted in the filename.
+        """
+        path = Path(filename)
+        for buffer_index, buffer in enumerate(self.buffers):
+            if len(self.buffers) > 1:
+                buffer_filename = str(Path(f"{path.with_suffix('')}{buffer_index}").with_suffix(".bin"))
+            else:
+                buffer_filename = filename
+
+            self.buffer_to_file(buffer, buffer_filename)
+
     def to_json(self,
                 *,
                 skipkeys: bool = False,
@@ -383,6 +530,10 @@ class GLTF2:
                 default: Callable = None,
                 sort_keys: bool = False,
                 **kw) -> str:
+        """
+        to_json and from_json from dataclasses_json
+        courtesy https://github.com/lidatong/dataclasses-json
+        """
 
         data = asdict(self)
 
@@ -450,7 +601,7 @@ class GLTF2:
         for i, buffer in enumerate(self.buffers):
             if buffer.uri == '':  # save glb_data as bin file
                 # update the buffer uri to point to our new local bin file
-                glb_data = getattr(self, "_glb_data", None)
+                glb_data = self.binary_blob()
                 if glb_data:
                     buffer.uri = str(Path(path.stem).with_suffix(".bin"))
                     with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
@@ -482,7 +633,7 @@ class GLTF2:
                         f"padding based on bufferView.byteStride is unsupported and may result in corrupted output. "
                         "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 if buffer.uri == '':  # assume loaded from glb binary file
-                    data = self._glb_data
+                    data = self.binary_blob()
                 elif Path(path.parent, buffer.uri).is_file():
                     with open(Path(path.parent, buffer.uri), 'rb') as fb:
                         data = fb.read()

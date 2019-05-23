@@ -12,7 +12,7 @@ import base64
 import pathlib
 
 from pygltflib import GLTF2, Scene
-from pygltflib.utils import add_primitive, add_indexed_geometry, buffer_to_uri, buffers_to_uri
+from pygltflib.utils import add_primitive, add_indexed_geometry
 
 PATH = "glTF-Sample-Models"
 
@@ -148,3 +148,9 @@ class TestUtils:
         buffers_to_uri(glb)
         import pdb; pdb.set_trace()
         glb.save("test_buffer_convert.gltf")
+
+
+class TestBufferConversions:
+    def test_buffers_to_files(self):
+        gltf = add_primitive(None)
+        gltf.buffers_to_files(filename="converttest.bin")
