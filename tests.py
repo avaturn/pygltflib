@@ -11,7 +11,7 @@ import base64
 
 import pathlib
 
-from pygltflib import GLTF2, Scene
+from pygltflib import GLTF2, Scene, Buffer, BufferFormat
 from pygltflib.utils import add_primitive, add_indexed_geometry
 
 PATH = "glTF-Sample-Models"
@@ -150,7 +150,39 @@ class TestUtils:
         glb.save("test_buffer_convert.gltf")
 
 
-class TestBufferConversions:
+
+class TestBufferOld:
     def test_buffers_to_files(self):
         gltf = add_primitive(None)
         gltf.buffers_to_files(filename="converttest.bin")
+
+
+class TestBufferConversions:
+    def test_buffer_conversions(self):
+        buffer = Buffer()
+        buffer.uri = data = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+        buffer.byteLength = 44
+        gltf = GLTF2()
+        gltf.buffers.append(buffer)
+
+        print("data1")
+        assert gltf.buffers[0].uri == data
+
+        gltf.convert_buffers(BufferFormat.BINARYBLOB)
+
+        assert gltf.buffers[0].uri == ""
+        assert len(gltf.binary_blob()) > 0
+        print("binary blob success", gltf.binary_blob())
+
+        gltf.convert_buffers(BufferFormat.BINFILE)
+
+        assert gltf.buffers[0].uri == "0.bin"
+        assert not gltf.binary_blob()
+
+        print("binary bin file success")
+
+        gltf.convert_buffers(BufferFormat.DATAURI)
+        print("final test")
+
+        assert gltf.buffers[0].uri == data
+

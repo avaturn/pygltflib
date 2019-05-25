@@ -35,7 +35,13 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Arthur van Hoff
 * Arifullah Jan
 
+### Thanks
+`pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
+
 ###### Changelog:
+* 1.11
+    * add access to internal glb binary data via `GLTF.binary_blob()`
+    * add `convert_buffers` method to switch buffer formats between data uri, binary files and binary blobs
 * 1.10
     * handle empty buffers on save
     * warn about unsupported data uri bufferViews
@@ -221,7 +227,8 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 >>> glb.save("test.glb")
 
-
+>>> glb.binary_blob()  # read the binary blob used by the buffer in a glb
+<a bunch of binary data>
 ```
 
 #### Converting files
@@ -242,13 +249,49 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 ##### Second method using utils
 ```python3
+>>> from pygltflib import GLTF2
 >>> from pygltflib.utils import glb2gltf, gltf2glb
+
 >>> # convert glb to gltf
 >>> glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
 
 >>> # convert gltf to glb
 >>> gltf2glb("glTF-Sample-Models/2.0/Box/glTF/Box.gltf", "test.glb", override=True)
 
+```
+
+#### Converting buffers 
+The data for a buffer in a GLTF2 files can be stored in the buffer object's URI string 
+or in a binary file pointed to by the buffer objects' URI string or as a binary blob
+inside a GLB file.
+
+While saving and loading GLTF2 files is mostly handled transparently by the library, 
+there may be some situations where you want a specific type of buffer storage.
+
+For example, if you have a GLTF file that stores all the associated data in .bin files
+but you want to create a single file, you need to convert the buffers from binary files
+to data uris or glb binary data.
+
+There is a convenience method named `conver_buffers` that can help.
+
+
+```python3
+>>> from pygltflib import GLTF2, BufferFormat
+
+>>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+>>> gltf.convert_buffers(BufferFormat.DATAURI)  # convert buffer URIs to data.
+>>> gltf.save_binary("test.glb")  # try and save, will get warning.
+Warning: Unable to save data uri to glb format.
+
+>>> gltf.convert_buffers(BufferFormat.BINARYBLOB)   # convert buffers to GLB blob
+>>> gltf.save_binary("test.glb")
+
+>>> gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
+>>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
+
+
+
+  
 
 ```
 
@@ -319,6 +362,4 @@ If available, The result of a visual inspection is in brackets next to the valid
 
 ### unittests
 `pytest tests.py`
-    
-### Thanks
-`pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
+

@@ -43,7 +43,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.10.0"
+__version__ = "1.11.0"
 
 
 A = TypeVar('A')
@@ -98,7 +98,7 @@ DATA_URI_HEADER = "data:application/octet-stream;base64,"
 class BufferFormat(Enum):
     DATAURI = "data uri"
     BINARYBLOB = "binary blob"
-    FILEPATH = "file path"
+    BINFILE = "bin file"
 
 
 def json_serial(obj):
@@ -425,7 +425,7 @@ class GLTF2:
                 warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         elif Path(path.parent, uri).is_file():
-            uri_format = BufferFormat.FILEPATH
+            uri_format = BufferFormat.BINFILE
         elif uri.startswith("data"):
             uri_format = BufferFormat.DATAURI
         else:
@@ -433,91 +433,52 @@ class GLTF2:
                           "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         return uri_format
 
-    def buffer_to_uri(self, buffer):
-        """ Convert a buffer to uri:data """
-        buffer_format = self.identify_uri(buffer.uri)
-
-        if buffer_format == BufferFormat.DATAURI:
-            warnings.warn(f"Buffer is already in data uri format")
-            return
-        elif buffer_format == BufferFormat.FILEPATH:
-            warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
-            data = self.load_file_uri(buffer.uri)
-        elif buffer_format == BufferFormat.BINARYBLOB:
-            data = self.binary_blob()
-
-        # convert buffer
-        data = base64.b64encode(data).decode('utf-8')
-        buffer.uri = f'{DATA_URI_HEADER}{data}'
-        self.destroy_binary_blob()  # free up any binary blob floating around
-
-    def buffers_to_uris(self):
-        """ Convert all buffers to uri:data type buffers"""
-        for buffer in self.buffers:
-            self.buffer_to_uri(buffer)
-
-    def buffer_to_binary_blob(self, buffer):
-        """ Convert buffer to a glb-friendly format """
-        buffer_format = self.identify_uri(buffer.uri)
-        data = None
-
-        if buffer_format == BufferFormat.BINARYBLOB:
-            warnings.warn(f"Buffer is already in binary blob format")
-            return
-        elif buffer_format == BufferFormat.FILEPATH:
-            warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
-            data = self.load_file_uri(buffer.uri)
-        elif buffer_format == BufferFormat.DATAURI:
-            data = self.decode_data_uri(buffer.uri)
-
-        self._glb_data = data
-        buffer.uri = ''
-
-    def buffers_to_binary_blob(self):
-        """ Convert all buffers to a glb-friendly format"""
-        if len(self.buffers) > 1:
-            warnings.warn("pygltflib currently unable to convert multiple buffers to a single binary blob."
-                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-            return
-        for buffer in self.buffers:
-            self.buffer_to_binary_blob(buffer)
-
-    def buffer_to_file(self, buffer, filename=None, override=False):
-        """ Convert buffer to a format pointing to a binary file """
-        buffer_format = self.identify_uri(buffer.uri)
-
-        if buffer_format == BufferFormat.FILEPATH:
-            warnings.warn(f"Buffer is already in data file format")
-            return
-        elif buffer_format == BufferFormat.DATAURI:
-            data = self.decode_data_uri(buffer.uri)
-        elif buffer_format == BufferFormat.BINARYBLOB:
-            data = self.binary_blob()
-
-        if filename:
-            path = Path(filename)
-        else:
-            path = getattr(self, "_path", Path("buffer"))
-
-        if data:
-            buffer.uri = str(path)
-            if path.is_file() and not override:
-                warnings.warn(f"Unable to write buffer file, a file already exists at {path}")
-            with open(path, "wb") as f:  # save bin file with the gltf file
-                f.write(data)
-
-    def buffers_to_files(self, filename=None, override=False):
+    def convert_buffers(self, buffer_format, override=False):
         """
-        In the case of multiple buffers, filename will have the buffer ID inserted in the filename.
+        GLTF files can store the buffer data in three different formats: As a binary blob ready for glb, as a data
+        uri string and as external bin files. This converts the buffers between the formats.
+
+        buffer_format (BufferFormat.ENUM)
+        override (bool): Override a bin file if it already exists and is about to be replaced
         """
-        path = Path(filename)
-        for buffer_index, buffer in enumerate(self.buffers):
-            if len(self.buffers) > 1:
-                buffer_filename = str(Path(f"{path.with_suffix('')}{buffer_index}").with_suffix(".bin"))
+        for i, buffer in enumerate(self.buffers):
+            current_buffer_format = self.identify_uri(buffer.uri)
+            if current_buffer_format == buffer_format:  # already in the format
+                continue
+
+            if current_buffer_format == BufferFormat.BINFILE:
+                warnings.warn(f"Conversion will leave {buffer.uri} file orphaned since data is now in the GLTF object.")
+                data = self.load_file_uri(buffer.uri)
+            elif current_buffer_format == BufferFormat.DATAURI:
+                data = self.decode_data_uri(buffer.uri)
+            elif current_buffer_format == BufferFormat.BINARYBLOB:
+                data = self.binary_blob()
             else:
-                buffer_filename = filename
+                return
 
-            self.buffer_to_file(buffer, buffer_filename)
+            self.destroy_binary_blob()  # free up any binary blob floating around
+
+            if buffer_format == BufferFormat.BINARYBLOB:
+                if len(self.buffers) > 1:
+                    warnings.warn("pygltflib currently unable to convert multiple buffers to a single binary blob."
+                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                    return
+                self._glb_data = data
+                buffer.uri = ''
+            elif buffer_format == BufferFormat.DATAURI:
+                # convert buffer
+                data = base64.b64encode(data).decode('utf-8')
+                buffer.uri = f'{DATA_URI_HEADER}{data}'
+            elif buffer_format == BufferFormat.BINFILE:
+                filename = Path(f"{i}").with_suffix(".bin")
+                path = getattr(self, "_path", Path())
+                path = path.joinpath(filename)
+                buffer.uri = str(filename)
+                if path.is_file() and not override:
+                    warnings.warn(f"Unable to write buffer file, a file already exists at {path}")
+                    continue
+                with open(path, "wb") as f:  # save bin file with the gltf file
+                    f.write(data)
 
     def to_json(self,
                 *,
@@ -639,7 +600,7 @@ class GLTF2:
                         data = fb.read()
                 elif buffer.uri.startswith("data"):
                     warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:40]} to glb, "
-                                  "please save in gltf format instead."
+                                  "please save in gltf format insteda or use the convert_buffers method first."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 else:
                     warnings.warn(f"Unable to save bufferView {buffer.uri[:50]} to glb, skipping. "
