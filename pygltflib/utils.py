@@ -27,19 +27,10 @@ import base64
 from struct import calcsize
 import pathlib
 import warnings
-from enum import Enum
 
 
 from . import *
 
-
-class BufferFormat(Enum):
-    DATAURI = "data uri"
-    BINARYBLOB = "binary blob"
-    FILEPATH = "file path"
-
-
-DATA_URI_HEADER = "data:application/octet-stream;base64,"
 
 # some higher level helper functions
 
@@ -378,92 +369,3 @@ def glb2gltf(source, destination=None, override=False):
         GLTF2().load(str(path)).save_json(str(destination))
     return True
 
-
-def identify_buffer_format(gltf, buffer):
-    """
-    Identify the format of the requested buffer.
-
-    Returns
-        buffer_type (str), data (binary data)
-    """
-    path = getattr(gltf, "_path", Path())
-
-    buffer_format = None
-    data = None
-
-    if buffer.uri == '':  # assume loaded from glb binary file
-        data = gltf._glb_data
-        buffer_format = BufferFormat.BINARYBLOB
-        if len(gltf.buffers) > 1:
-            warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
-                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-    elif Path(path.parent, buffer.uri).is_file():
-        with open(Path(path.parent, buffer.uri), 'rb') as fb:
-            data = fb.read()
-        buffer_format = BufferFormat.FILEPATH
-    elif buffer.uri.startswith("data"):
-        data = buffer.uri.split(DATA_URI_HEADER)[1]
-        data = base64.decodebytes(bytes(data, "utf8"))
-        buffer_format = BufferFormat.DATAURI
-    else:
-        warnings.warn("pygltf.utils.identify_buffer_format can not identify buffer."
-                      "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-    return buffer_format, data
-
-
-def buffer_to_uri(gltf, buffer):
-    """ convert buffer to uri:data """
-    buffer_format, data = identify_buffer_format(gltf, buffer)
-
-    if buffer_format == BufferFormat.DATAURI:
-        warnings.warn(f"Buffer is already in data uri format")
-        return
-    elif buffer_format == BufferFormat.FILEPATH:
-        warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
-
-    # convert buffer
-    data = base64.b64encode(data).decode('utf-8')
-    buffer.uri = f'{DATA_URI_HEADER}{data}'
-    gltf._glb_data = None  # free up any binary blob floating around
-
-
-def buffers_to_uri(gltf):
-    """ Convert all buffers to """
-    for buffer in gltf.buffers:
-        buffer_to_uri(gltf, buffer)
-
-
-def buffer_to_glb_blob(gltf, buffer):
-    """ Convert buffer to a glb-friendly format """
-    buffer_format, data = identify_buffer_format(gltf, buffer)
-
-    if buffer_format == BufferFormat.BINARYBLOB:
-        warnings.warn(f"Buffer is already in binary blob format")
-        return
-    elif buffer_format == BufferFormat.FILEPATH:
-        warnings.warn(f"Conversion leaves {buffer.uri} file orphaned since data is now in the GLTF object.")
-
-    gltf._glb_data = data
-    buffer.uri = ''
-
-
-def buffer_to_binary_file(gltf, buffer_index):
-    """ Convert buffer to a format pointing to a binary file """
-    buffer = gltf.buffers[buffer_index]
-    buffer_format, data = identify_buffer_format(gltf, buffer)
-
-    if buffer_format == BufferFormat.FILEPATH:
-        warnings.warn(f"Buffer is already in data file format")
-        return
-
-    path = getattr(gltf, "_path", Path())
-
-    if data:
-        buffer.uri = str(Path(f"{path.stem}{buffer_index}").with_suffix(".bin"))
-        with open(path.with_suffix(".bin"), "wb") as f:  # save bin file with the gltf file
-            f.write(data)
-
-
-def buffers_to_binary_files(gltf):
-    for buffer_index in range(len(gltf.buffers)):
-        buffer_to_binary_file(gltf, buffer_index)
