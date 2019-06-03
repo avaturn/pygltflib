@@ -2,7 +2,14 @@
 
 Python library for reading, writing and handling GLTF files. Python3.6+
 
-## Requirements
+
+## Contents
+
+* [Requirements](##Requirements)
+* [Converting buffers](####Converting buffers) 
+
+
+##Requirements
 * Python 3.6+
 * dataclasses
 * dataclasses-json
@@ -22,14 +29,13 @@ Check the table below for an idea of which sample models validate.
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 We are very interested in hearing your use cases for `pygltflib` to help drive the roadmap.
 
-###### Roadmap:
+###### Roadmap
 * Add helper functions for creating meshes
 * Full support for binary GLTF (.glb) files
 * Reject file overwrites unless overwrite flag set
 * Give options on storing binary buffers (embedded vs external)
 
-
-###### Contributors:
+###### Contributors
 * Luke Miller
 * Sebastian Höffner
 * Arthur van Hoff
@@ -91,7 +97,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 `git clone https://gitlab.com/dodgyville/pygltflib`
 
-## Usage
+# Usage
 Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Khronos at:
 
 https://github.com/KhronosGroup/glTF-Sample-Models
@@ -288,10 +294,6 @@ Warning: Unable to save data uri to glb format.
 
 >>> gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
 >>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
-
-
-
-  
 
 ```
 
