@@ -1,21 +1,83 @@
 # pygltflib
 
-Python library for reading, writing and handling GLTF files. Python3.6+
+This is a library for reading, writing and handling GLTF files. It works for Python3.6 and above.
+
+It supports the entire specification, including materials and animations. Main features are:
+* GLB and GLTF support
+* Buffer data conversion
+* All attributes are type-hinted
 
 
-## Contents
+##Quickstart
 
-* [Requirements](##Requirements)
-* [Converting buffers](####Converting buffers) 
+`pip install pygltflib`
+
+### How do I...
 
 
-##Requirements
-* Python 3.6+
-* dataclasses
-* dataclasses-json
-* pytest (optional)
+#### Create an empty GLTF2 object?
+```python3
+from pygltflib import GLTF2
 
-It requires python 3.6 and above because it uses dataclasses and all attributes are type hinted. And f-strings, plenty of f-strings.
+gltf = GLTF2()
+```
+
+#### Add a scene?
+
+```python3
+from pygltflib import GLTF2, Scene
+
+gltf = GLTF2()
+scene = Scene()
+gltf.scenes.append(scene)  # scene available at gltf.scenes[0]
+```
+
+
+#### Load a file?
+```python3
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+```
+
+#### Load a binary glb file?
+```python3
+glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
+glb = GLTF2().load(glb_filename)  # load method auto detects based on extension
+```
+
+#### Load a binary file with an unusual extension?
+```python3
+glb = GLTF2().load_binary("BinaryGLTF.glk")   # load_json and load_binary helper methods
+```
+
+#### Convert buffers to glb binary buffers?
+```python3
+from pygltflib import GLTF2, BufferFormat
+
+gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+gltf.convert_buffers(BufferFormat.BINARYBLOB)   # convert buffers to GLB blob
+```
+
+#### Convert buffer to data uri (embedded) buffer?
+```python3
+gltf.convert_buffers(BufferFormat.DATAURI)  # convert buffer URIs to data.
+```
+
+#### Convert buffers to binary file (external) buffers?
+```python3
+gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
+gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
+```
+
+
+#### Convert a glb to a gltf file?
+```python3
+from pygltflib.utils import glb2gltf, gltf2glb
+
+# convert glb to gltf
+glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
+```
+
 
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
@@ -24,27 +86,31 @@ The library was initially built to load and save simple meshes but support for t
 and animations is pretty good. Supports both json (.gltf) and binary (.glb) file formats, although .glb support 
 is missing some features at the moment. 
 
+It requires python 3.6 and above because it uses dataclasses and all attributes are type hinted. And f-strings, plenty of f-strings.
+
 Check the table below for an idea of which sample models validate.
 
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 We are very interested in hearing your use cases for `pygltflib` to help drive the roadmap.
 
-###### Roadmap
+#### Roadmap
 * Add helper functions for creating meshes
-* Full support for binary GLTF (.glb) files
-* Reject file overwrites unless overwrite flag set
-* Give options on storing binary buffers (embedded vs external)
+* Test coverage
+* Automated validation and visual inspection
 
-###### Contributors
+#### Contributors
 * Luke Miller
 * Sebastian Höffner
 * Arthur van Hoff
 * Arifullah Jan
 
-### Thanks
+#### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
-###### Changelog:
+#### Changelog:
+* 1.11.1
+    * update documentation
+    * improve packaging
 * 1.11
     * add access to internal glb binary data via `GLTF.binary_blob()`
     * add `convert_buffers` method to switch buffer formats between data uri, binary files and binary blobs
@@ -80,42 +146,21 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 
 ## Install
-
-### PIP
-
-###### Method 1
-`pip install pygltflib` 
-
-###### Method 2
-`python -m pip install pygltflib`
-
-###### Method 3
-`py -3 -m pip install pygltflib`
+`pip install pygltflib`
 
 
-### Source
+## Source
 
 `git clone https://gitlab.com/dodgyville/pygltflib`
 
-# Usage
+
+## More Detailed Usage
 Note: These examples use the official [sample models](https://github.com/KhronosGroup/glTF-Sample-Models) provided by Khronos at:
 
 https://github.com/KhronosGroup/glTF-Sample-Models
 
-### Creating
-```python3
->>> from pygltflib import GLTF2, Scene
->>> gltf = GLTF2()
->>> gltf.scene # no scene set by default
->>> len(gltf.scenes)
-0
 
->>> scene = Scene()
->>> gltf.scenes.append(scene)
->>> len(gltf.scenes)
-1
 
-```
 ##### A simple mesh
 ```python3
 from pygltflib import *

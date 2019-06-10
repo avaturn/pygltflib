@@ -11,11 +11,16 @@ setuptools.setup(
     version=__version__,
     author="Luke Miller",
     author_email="dodgyville@gmail.com",
-    description="Python library for reading, writing and managing 3D objects in the Khronos Group gltf and gltf2 formats. Python 3.6+",
+    description="Python library for reading, writing and managing 3D objects in the Khronos Group gltf and gltf2 formats.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.com/dodgyville/pygltflib",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "dataclasses;python_version>='3.6'",
+        "dataclasses-json>=0.0.25",
+    ],
+    python_requires=">=3.6",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
