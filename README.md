@@ -10,12 +10,14 @@ It supports the entire specification, including materials and animations. Main f
 
 ##Quickstart
 
-`pip install pygltflib`
+```
+pip install pygltflib
+```
 
 ### How do I...
 
 
-#### Create an empty GLTF2 object?
+#### Create an empty GLTF2 object
 ```python3
 from pygltflib import GLTF2
 
@@ -107,10 +109,12 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
-#### Changelog:
+#### Changelog
 * 1.11.1
+
     * update documentation
     * improve packaging
+
 * 1.11
     * add access to internal glb binary data via `GLTF.binary_blob()`
     * add `convert_buffers` method to switch buffer formats between data uri, binary files and binary blobs
@@ -224,8 +228,6 @@ gltf.accessors.append(accessor2)
 
 # save to file
 gltf.save("triangle.gltf")
-
-
 ```
 
 
@@ -255,7 +257,6 @@ Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
 
 >>> filename2 = "test.gltf"
 >>> gltf.save(filename2)
-
 ```
 
 #### GLB files 
@@ -408,5 +409,7 @@ If available, The result of a visual inspection is in brackets next to the valid
 
 
 ### unittests
-`pytest tests.py`
+```
+pytest tests.py
+```
 
