@@ -17,7 +17,8 @@ pip install pygltflib
 ### How do I...
 
 
-#### Create an empty GLTF2 object
+#### Create an empty GLTF2 object?
+
 ```python3
 from pygltflib import GLTF2
 
@@ -36,23 +37,27 @@ gltf.scenes.append(scene)  # scene available at gltf.scenes[0]
 
 
 #### Load a file?
+
 ```python3
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
 ```
 
 #### Load a binary glb file?
+
 ```python3
 glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
 glb = GLTF2().load(glb_filename)  # load method auto detects based on extension
 ```
 
 #### Load a binary file with an unusual extension?
+
 ```python3
 glb = GLTF2().load_binary("BinaryGLTF.glk")   # load_json and load_binary helper methods
 ```
 
 #### Convert buffers to glb binary buffers?
+
 ```python3
 from pygltflib import GLTF2, BufferFormat
 
@@ -150,12 +155,16 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 
 ## Install
-`pip install pygltflib`
+```
+pip install pygltflib
+```
 
 
 ## Source
 
-`git clone https://gitlab.com/dodgyville/pygltflib`
+```
+git clone https://gitlab.com/dodgyville/pygltflib
+```
 
 
 ## More Detailed Usage
@@ -286,6 +295,7 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 #### Converting files
 
 ##### First method
+
 ```python3
 >>> from pygltflib import GLTF2
 
@@ -296,10 +306,10 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 >>> # convert gltf to glb
 >>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
 >>> gltf.save("test.glb")
-
 ```
 
 ##### Second method using utils
+
 ```python3
 >>> from pygltflib import GLTF2
 >>> from pygltflib.utils import glb2gltf, gltf2glb
@@ -326,7 +336,6 @@ to data uris or glb binary data.
 
 There is a convenience method named `conver_buffers` that can help.
 
-
 ```python3
 >>> from pygltflib import GLTF2, BufferFormat
 
@@ -340,7 +349,6 @@ Warning: Unable to save data uri to glb format.
 
 >>> gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
 >>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
-
 ```
 
 ## Running the tests
