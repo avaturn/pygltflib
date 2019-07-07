@@ -115,8 +115,10 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.2
+    * fix compatibility issue with different versions of dataclasses-json
+    
 * 1.11.1
-
     * update documentation
     * improve packaging
 
