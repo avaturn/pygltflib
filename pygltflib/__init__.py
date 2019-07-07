@@ -34,7 +34,7 @@ from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
 import warnings
 
-from dataclasses_json import dataclass_json
+from dataclasses_json import dataclass_json as _dataclass_json
 from dataclasses_json.core import _decode_dataclass
 
 try:
@@ -43,7 +43,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.1"
+__version__ = "1.11.2"
 
 
 A = TypeVar('A')
@@ -107,6 +107,22 @@ def json_serial(obj):
         return obj.isoformat()
 
     raise TypeError("Type %s not serializable" % type(obj))
+
+
+# backwards and forwards compat dataclasses-json and dataclasses
+class LetterCase(Enum):
+    CAMEL = 'camelCase'
+    KEBAB = 'kebab-case'
+    SNAKE = 'snake_case'
+
+
+def dataclass_json(cls,
+                   *_args, **_kwargs):
+    try:
+        dclass = _dataclass_json(cls)
+    except TypeError:
+        dclass = _dataclass_json(cls, decode_letter_case=LetterCase.SNAKE, encode_letter_case=LetterCase.SNAKE)
+    return dclass
 
 
 # glTF uses a right-handed coordinate system, that is, the cross product of +X and +Y yields +Z. glTF defines +Y as up.
