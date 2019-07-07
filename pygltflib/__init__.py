@@ -121,9 +121,10 @@ def dataclass_json(cls,
     try:
         dclass = _dataclass_json(cls, *args, **kwargs)  # hopefully a future version of dataclass-json > 0.2.8
     except TypeError:  # dataclass-json < 0.2.8
-        dclass = _dataclass_json(cls, decode_letter_case=LetterCase.SNAKE, encode_letter_case=LetterCase.SNAKE)
-    except TypeError:
-        dclass = _dataclass_json(cls)  # dataclass-json == 0.2.8
+        dclass = _dataclass_json(cls)
+    except TypeError: # dataclass-json == 0.2.8
+        warnings.warn("Please upgrade your version of dataclasses-json.")
+        dclass = _dataclass_json(cls, decode_letter_case=LetterCase.camelCase, encode_letter_case=LetterCase.camelCase)
     return dclass
 
 
