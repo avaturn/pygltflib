@@ -116,8 +116,7 @@ class LetterCase(Enum):
     SNAKE = 'snake_case'
 
 
-def dataclass_json(cls,
-                   *args, **kwargs):
+def dataclass_json(cls, *args, **kwargs):
     try:
         dclass = _dataclass_json(cls, *args, **kwargs)  # hopefully a future version of dataclass-json > 0.2.8
     except TypeError:  # dataclass-json < 0.2.8
@@ -614,13 +613,13 @@ class GLTF2:
                         "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 if buffer.uri == '':  # assume loaded from glb binary file
                     data = self.binary_blob()
-                elif Path(path.parent, buffer.uri).is_file():
-                    with open(Path(path.parent, buffer.uri), 'rb') as fb:
-                        data = fb.read()
                 elif buffer.uri.startswith("data"):
                     warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:40]} to glb, "
                                   "please save in gltf format insteda or use the convert_buffers method first."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                elif Path(path.parent, buffer.uri).is_file():
+                    with open(Path(path.parent, buffer.uri), 'rb') as fb:
+                        data = fb.read()
                 else:
                     warnings.warn(f"Unable to save bufferView {buffer.uri[:50]} to glb, skipping. "
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
