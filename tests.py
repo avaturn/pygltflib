@@ -56,8 +56,7 @@ class TestOutput:
         fname = pathlib.Path("validator/AnimatedTriangle_gltf.glb")
         gltf = GLTF2().load(fname)
         assert gltf.asset.version == "2.0"
-        assert gltf.accessors[0].bufferView == 0
-        assert gltf.accessors[4].bufferView == 4
+        assert [(i, x.bufferView) for i, x in enumerate(gltf.accessors)] == [(0, 0), (1, 1), (2, 2), (3, 2)]
 
     def test_Avocado(self):
         """ Load a GLB saved by us from the original GLTF"""
@@ -88,8 +87,6 @@ class TestConversion:
         gltf = GLTF2().load(fnamejson)
         gltf.save("test.glb")
         glbed = GLTF2().load("test.glb")
-        glb.bufferViews.sort()
-        glbed.bufferViews.sort()
         print("data", glbed._glb_data[:100])
         assert len(glb.scenes) > 0
 
@@ -129,35 +126,29 @@ class TestUtils:
         gltf.save("test_primitive.gltf")
         pass
 
-    def test_buffer_identify(self):
-        gltf = add_primitive(None)
-        data = gltf.buffers[0].uri
-        data = base64.decodebytes(data)
-        pass
-
-    def test_buffer_from_blob_to_uri(self):
-        binblob = b'\x00\x00\x01\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00'
-        uridata = 'AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA='
-        gltf = add_primitive(None)
-        buffer_to_uri(gltf, 0)
-
-    def test_buffer_to_uri(self):
-        fname = pathlib.Path(PATH).joinpath("2.0/Avocado/glTF-Binary/Avocado.glb")
-        glb = GLTF2().load(fname)
-
-        buffers_to_uri(glb)
-        import pdb; pdb.set_trace()
-        glb.save("test_buffer_convert.gltf")
-
-
-
-class TestBufferOld:
-    def test_buffers_to_files(self):
-        gltf = add_primitive(None)
-        gltf.buffers_to_files(filename="converttest.bin")
-
 
 class TestBufferConversions:
+    def test_identify_datauri(self):
+        gltf = GLTF2()
+        uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+        buffer_format = gltf.identify_uri(uri)
+        assert buffer_format == BufferFormat.DATAURI
+
+
+    def test_identify_binfile(self):
+        gltf = GLTF2()
+        uri = "test.bin"
+        buffer_format = gltf.identify_uri(uri)
+        assert buffer_format == BufferFormat.BINFILE
+
+    def test_identify_binfile(self):
+        gltf = GLTF2()
+        uri = b'\x00\x00\x01\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00'
+        uri = ''  # empty uri means data blob
+        buffer_format = gltf.identify_uri(uri)
+        assert buffer_format == BufferFormat.BINARYBLOB
+
+
     def test_buffer_conversions(self):
         buffer = Buffer()
         buffer.uri = data = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
