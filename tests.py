@@ -119,6 +119,7 @@ class TestUtils:
         vertices = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
         gltf = GLTF2()
         scene = Scene()
+        scene.nodes.append(0)
         gltf.scene = 0
         gltf.scenes.append(scene)
 
