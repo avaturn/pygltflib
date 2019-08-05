@@ -242,7 +242,8 @@ def add_indexed_geometry(gltf, indices, vertices):
     bufferView1.target = ELEMENT_ARRAY_BUFFER
     buffer.uri += base64.b64encode(chunk).decode("utf-8")  # add to data stream
 
-    byte_length += 4 - byte_length % 4  # pad to next chunk
+    # DH: we do not need this line.
+    # byte_length += 4 - byte_length % 4  # pad to next chunk
 
     chunk = b""
     pack = "<fff"

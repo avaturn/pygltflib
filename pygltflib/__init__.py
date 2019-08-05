@@ -43,7 +43,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.3"
+__version__ = "1.11.4"
 
 
 A = TypeVar('A')
@@ -120,10 +120,11 @@ def dataclass_json(cls, *args, **kwargs):
     try:
         dclass = _dataclass_json(cls, *args, **kwargs)  # hopefully a future version of dataclass-json > 0.2.8
     except TypeError:  # dataclass-json < 0.2.8
-        dclass = _dataclass_json(cls)
-    except TypeError: # dataclass-json == 0.2.8
-        warnings.warn("Please upgrade your version of dataclasses-json.")
-        dclass = _dataclass_json(cls, decode_letter_case=LetterCase.camelCase, encode_letter_case=LetterCase.camelCase)
+        try:
+            dclass = _dataclass_json(cls)
+        except TypeError: # dataclass-json == 0.2.8
+            warnings.warn("Please upgrade your version of dataclasses-json.")
+            dclass = _dataclass_json(cls, decode_letter_case=LetterCase.CAMEL, encode_letter_case=LetterCase.CAMEL)
     return dclass
 
 
