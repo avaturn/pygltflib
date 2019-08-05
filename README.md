@@ -110,11 +110,16 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Sebastian Höffner
 * Arthur van Hoff
 * Arifullah Jan
+* Daniel Haehn
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+
+* 1.11.4
+    * remove padding
+    * improve dataclasses-json backwards compatibility
 
 * 1.11.3
     * fix import issue with setup.py
