@@ -443,10 +443,10 @@ class GLTF2:
             if len(self.buffers) > 1:
                 warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-        elif Path(path.parent, uri).is_file():
-            uri_format = BufferFormat.BINFILE
         elif uri.startswith("data"):
             uri_format = BufferFormat.DATAURI
+        elif Path(path.parent, uri).is_file():
+            uri_format = BufferFormat.BINFILE
         else:
             warnings.warn("pygltf.GLTF.identify_buffer_format can not identify buffer."
                           "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
