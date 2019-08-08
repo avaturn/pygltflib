@@ -43,7 +43,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.4"
+__version__ = "1.11.5"
 
 
 A = TypeVar('A')
