@@ -116,6 +116,8 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.5
+    * reorder identifyuri to avoid error when checking large bytestring as file name
 
 * 1.11.4
     * remove padding
