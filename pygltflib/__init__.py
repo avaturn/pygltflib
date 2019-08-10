@@ -671,6 +671,7 @@ class GLTF2:
 
     def save(self, fname, asset=Asset()):
         self.asset = asset
+        self._path = Path(fname).parent
         ext = Path(fname).suffix
         if ext.lower() in [".glb"]:
             return self.save_binary(fname)
