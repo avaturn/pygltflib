@@ -4,9 +4,9 @@ link the glTF-Sample-Models into this directory eg:
 ln -s /home/user/projects/glTF-Sample-Models .
 
 To run:
-./python3 -m test
-
+pytest tests.py
 """
+
 import base64
 
 import pathlib
@@ -40,7 +40,6 @@ class TestValidator:
         assert gltf.asset.version == "2.0"
         assert gltf.accessors[0].bufferView == 0
         assert gltf.accessors[4].bufferView == 4
-
 
 class TestOutput:
     def test_Box(self):

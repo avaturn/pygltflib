@@ -117,7 +117,8 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 #### Changelog
 * 1.11.5
-    * reorder identifyuri to avoid error when checking large bytestring as file name
+    * reorder `identify_uri` to avoid using lengthy byte strings as file names
+    * assign parent path when saving so bin files save to same path
 
 * 1.11.4
     * remove padding
