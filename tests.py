@@ -31,6 +31,7 @@ PATH = "glTF-Sample-Models"
 
 print(f"Testing version {pygltflib.__version__}")
 
+
 class TestValidator:
     def setup_method(self, _test_method):
         path = pathlib.Path(PATH)
@@ -54,6 +55,41 @@ class TestValidator:
         assert gltf.asset.version == "2.0"
         assert gltf.accessors[0].bufferView == 0
         assert gltf.accessors[4].bufferView == 4
+
+
+class TestIO:
+    def test_load_glb(self):
+        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        reference = GLTF2().load(r)
+        assert len(reference.buffers) == 1
+
+    def test_save_glb2glb(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            reference = GLTF2().load(r)
+
+            f = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            glb1 = GLTF2().load(r)
+
+#            t = pathlib.Path(tmpdirname) / "glb2glb.glb"
+            t = "boxglb2glb.glb"
+            glb1.save(t)
+            glb2 = GLTF2().load(t)
+
+            reference.convert_buffers(BufferFormat.DATAURI)
+            glb2.convert_buffers(BufferFormat.DATAURI)
+
+            reference.save("refglb2gltf.gltf")
+            glb2.save("boxglb2gltf.gltf")
+
+
+            print("")
+            print("ref",reference)
+            print("glb",glb2)
+
+            assert glb2.binary_blob() == reference.binary_blob()
+
+        #assert glb2.binary_blob() == reference.binary_blob()
 
 
 class TestOutput:
@@ -108,8 +144,12 @@ class TestConversion:
         f = "BrainStem"
         fname = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
         glb = GLTF2().load(fname)
-        glb.save("test.glb")
-        glbed = GLTF2().load("test.glb")
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname)/"test.glb"
+            glb.save(t)
+            glbed = GLTF2().load(t)
+
         assert glbed._glb_data == glb._glb_data
 
     def test_loadGLBsaveGLTF(self):
@@ -190,6 +230,32 @@ class TestBufferConversions:
 
         assert gltf.buffers[0].uri == data
 
+    def test_buffer_conversions_realworld(self):
+        fembedded = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        embedded = GLTF2().load(fembedded)
+
+        fbinary = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        binary = GLTF2().load(fbinary)
+
+        ffilebased = pathlib.Path(PATH) / "2.0/Box/glTF/Box.gltf"
+        filebased = GLTF2().load(ffilebased)
+
+        assert len(embedded.buffers) == 1
+        assert len(binary.buffers) == 1
+        assert len(filebased.buffers) == 1
+
+        binary.convert_buffers(BufferFormat.DATAURI)
+
+        # so binary to datauri
+        assert binary.buffers == embedded.buffers
+
+        # reload binary
+        binary = GLTF2().load(fbinary)
+
+        # datauri to binary
+        embedded.convert_buffers(BufferFormat.BINARYBLOB)
+        assert binary.buffers == embedded.buffers
+
 
 class TestExtensions:
     def test_load_mesh_primitive_extensions(self):
@@ -269,3 +335,38 @@ class TestAttributes:
         attributes = gltf2.meshes[0].primitives[0].attributes
         assert attributes.POSITION == 1
         assert attributes._MYCUSTOMATTRIBUTE == 124
+
+
+class TestBuffers:
+    def test_buffer_datauri_load_gltf(self):
+        f = pathlib.Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
+        gltf = GLTF2().load(f)
+
+        assert gltf.buffers[0].uri == "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+
+
+    def test_buffer_datauri_save_gltf2gltf(self):
+        f = pathlib.Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname)/"buffers.gltf"
+            gltf.save(t)
+            gltf2 = GLTF2().load(t)
+        assert gltf2.buffers[0].uri == "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+
+    def test_buffer_datauri_save_gltf2glb(self):
+        f = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname)/"buffers.glb"
+            gltf.convert_buffers(BufferFormat.BINARYBLOB)
+            gltf.save(t)
+            print("buff", gltf.binary_blob())
+            glb = GLTF2().load(t)
+            r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            reference = GLTF2().load(r)
+
+        assert glb.binary_blob() == reference.binary_blob()
+
+
+

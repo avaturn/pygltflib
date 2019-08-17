@@ -663,21 +663,18 @@ class GLTF2:
             path = getattr(self, "_path", Path())
             for i, bufferView in enumerate(self.bufferViews):
                 buffer = self.buffers[bufferView.buffer]
-                if bufferView.byteStride and bufferView.byteStride > 0:
-                    warnings.warn(
-                        f"padding based on bufferView.byteStride is unsupported and may result in corrupted output. "
-                        "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 if buffer.uri == '':  # assume loaded from glb binary file
                     data = self.binary_blob()
                 elif buffer.uri.startswith("data"):
-                    warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:40]} to glb, "
-                                  "please save in gltf format insteda or use the convert_buffers method first."
+                    warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:20]} to glb, "
+                                  "please save in gltf format instead or use the convert_buffers method first."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                    return False
                 elif Path(path.parent, buffer.uri).is_file():
                     with open(Path(path.parent, buffer.uri), 'rb') as fb:
                         data = fb.read()
                 else:
-                    warnings.warn(f"Unable to save bufferView {buffer.uri[:50]} to glb, skipping. "
+                    warnings.warn(f"Unable to save bufferView {buffer.uri[:20]} to glb, skipping. "
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     continue
                 byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0
@@ -731,9 +728,9 @@ class GLTF2:
         if ext.lower() in [".glb"]:
             return self.save_binary(fname)
         else:
-            if hasattr(self, "_glb_data"):
+            if getattr(self, "_glb_data", None):
                 warnings.warn(
-                    "This file contains a binary blob loaded from a .glb file, "
+                    f"This file ({fname}) contains a binary blob loaded from a .glb file, "
                     "and this will be saved to a .bin file next to the json file.")
             return self.save_json(fname)
 

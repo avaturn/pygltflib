@@ -5,8 +5,8 @@ This is a library for reading, writing and handling GLTF files. It works for Pyt
 It supports the entire specification, including materials and animations. Main features are:
 * GLB and GLTF support
 * Buffer data conversion
+* Extensions
 * All attributes are type-hinted
-
 
 ## Quickstart
 
@@ -95,6 +95,17 @@ gltf.materials[0].extensions['ADOBE_materials_thin_transparency']
 
 ```
 
+
+#### Add a custom attribute to Attributes?
+```python3
+# Application-specific semantics must start with an underscore, e.g., _TEMPERATURE.
+a = Attributes()
+a._MYCUSTOMATTRIBUTE = 123
+
+gltf.meshes[0].primitives[0].attributes._MYOTHERATTRIBUTE = 456
+```
+
+
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
 
@@ -112,6 +123,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 #### Roadmap
 * Add helper functions for creating meshes
 * Test coverage
+* Enforce single underscore on custom Attribute attributes 
 * Automated validation and visual inspection
 
 #### Contributors
@@ -130,6 +142,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
     * add support for extras
     * add support for custom attributes on Attributes
     * set Primitive.attributes to `None` by default (use `primitive.attributes = Attributes()`)
+    * remove warning about byteStride as that is not the responsibility of this library
     * add lots of tests
 
 * 1.11.5
