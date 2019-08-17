@@ -24,12 +24,17 @@ SOFTWARE.
 """
 import base64
 import copy
-from dataclasses import dataclass, field, asdict
+from dataclasses import (
+    _is_dataclass_instance,
+    dataclass,
+    field,
+    fields,
+)
 from datetime import date, datetime
 from enum import Enum
 import json
 from pathlib import Path
-from typing import List, Dict
+from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
 import warnings
@@ -43,8 +48,17 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.5"
+__version__ = "1.11.6"
 
+"""
+About the GLTF2 file format:
+
+glTF uses a right-handed coordinate system, that is, the cross product of +X and +Y yields +Z. glTF defines +Y as up.
+The front of a glTF asset faces +Z.
+The units for all linear distances are meters.
+All angles are in radians.
+Positive rotation is counterclockwise.
+"""
 
 A = TypeVar('A')
 
@@ -101,19 +115,40 @@ class BufferFormat(Enum):
     BINFILE = "bin file"
 
 
+# backwards and forwards compat dataclasses-json and dataclasses
+class LetterCase(Enum):
+    CAMEL = 'camelCase'
+    KEBAB = 'kebab-case'
+    SNAKE = 'snake_case'
+
+
+def delete_empty_keys(dictionary):
+    """
+    Delete keys with the value ``None`` in a dictionary, recursively.
+
+    This alters the input so you may wish to ``copy`` the dict first.
+
+    Courtesy Chris Morgan and modified from:
+    https://stackoverflow.com/questions/4255400/exclude-empty-null-values-from-json-serialization
+    """
+    for key, value in list(dictionary.items()):
+        if value is None or (hasattr(value, '__iter__') and len(value) == 0):
+            del dictionary[key]
+        elif isinstance(value, dict):
+            delete_empty_keys(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    delete_empty_keys(item)
+    return dictionary  # For convenience
+
+
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
 
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-# backwards and forwards compat dataclasses-json and dataclasses
-class LetterCase(Enum):
-    CAMEL = 'camelCase'
-    KEBAB = 'kebab-case'
-    SNAKE = 'snake_case'
 
 
 def dataclass_json(cls, *args, **kwargs):
@@ -128,14 +163,34 @@ def dataclass_json(cls, *args, **kwargs):
     return dclass
 
 
-# glTF uses a right-handed coordinate system, that is, the cross product of +X and +Y yields +Z. glTF defines +Y as up.
-# The front of a glTF asset faces +Z.
-#
-# The units for all linear distances are meters.
-#
-# All angles are in radians.
-#
-# Positive rotation is counterclockwise.
+def gltf_asdict(obj, *, dict_factory=dict):
+    # convert a dataclass object to a dict
+    if not _is_dataclass_instance(obj):
+        raise TypeError("asdict() should be called on dataclass instances")
+    return _asdict_inner(obj, dict_factory)
+
+
+def _asdict_inner(obj, dict_factory):
+    # return the same result as dataclass _asdict_inner except for Attributes, which can have custom specifiers.
+    if type(obj) == Attributes:
+        return copy.deepcopy(obj.__dict__)
+    if _is_dataclass_instance(obj):
+        result = []
+        for f in fields(obj):
+            value = _asdict_inner(getattr(obj, f.name), dict_factory)
+            result.append((f.name, value))
+        return dict_factory(result)
+    elif isinstance(obj, tuple) and hasattr(obj, '_fields'):
+        return type(obj)(*[_asdict_inner(v, dict_factory) for v in obj])
+    elif isinstance(obj, (list, tuple)):
+
+        return type(obj)(_asdict_inner(v, dict_factory) for v in obj)
+    elif isinstance(obj, dict):
+        return type(obj)((_asdict_inner(k, dict_factory),
+                          _asdict_inner(v, dict_factory))
+                         for k, v in obj.items())
+    else:
+        return copy.deepcopy(obj)
 
 
 @dataclass_json
@@ -146,29 +201,52 @@ class Asset:
     version: str = "2.0"
 
 
-@dataclass_json
-@dataclass
+# Attributes is a special case so we provide our own json handling
 class Attributes:
-    POSITION: int = None
-    NORMAL: int = None
-    TANGENT: int = None
-    TEXCOORD_0: int = None
-    TEXCOORD_1: int = None
-    COLOR_0: int = None
-    JOINTS_0: int = None
-    WEIGHTS_0: int = None
+    def __init__(self,
+            POSITION = None,
+            NORMAL = None,
+            TANGENT = None,
+            TEXCOORD_0 = None,
+            TEXCOORD_1 = None,
+            COLOR_0: int = None,
+            JOINTS_0: int = None,
+            WEIGHTS_0 = None, *args, **kwargs):
+        self.POSITION = POSITION
+        self.NORMAL = NORMAL
+        self.TANGENT = TANGENT
+        self.TEXCOORD_0 =  TEXCOORD_0
+        self.TEXCOORD_1 = TEXCOORD_1
+        self.COLOR_0 = COLOR_0
+        self.JOINTS_0 = JOINTS_0
+        self.WEIGHTS_0 = WEIGHTS_0
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
+    def __repr__(self):
+        return self.__class__.__qualname__ + f'(' + ', '.join([f"{f}={v}" for f,v in self.__dict__.items()]) + ')'
 
-# @dataclass_json
-# @dataclass
-# class PrimitiveTarget: #TODO is this the same as Attributes?
-#     POSITION: int = None
+    def to_json(self, *args, **kwargs):
+        # Attributes objects can have custom attrs, so use our own json conversion methods.
+        data = copy.deepcopy(self.__dict__)
+        return json.dumps(data)
+
+    def from_json(self):
+        warnings.warn("To allow custom attributes on Attributes, we don't use dataclasses-json on this class."
+                      "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
 
 
 @dataclass_json
 @dataclass
-class Primitive:
-    attributes: Attributes = field(default_factory=Attributes)
+class Property:
+    extensions: Dict[str, Any] = field(default_factory=dict)
+    extras: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass_json
+@dataclass
+class Primitive(Property):
+    attributes: Attributes = None
     indices: int = None
     mode: int = None
     material: int = None
@@ -177,7 +255,7 @@ class Primitive:
 
 @dataclass_json
 @dataclass
-class Mesh:
+class Mesh(Property):
     primitives: List[Primitive] = field(default_factory=list)
     weights: List[float] = field(default_factory=list)
     name: str = None
@@ -185,7 +263,7 @@ class Mesh:
 
 @dataclass_json
 @dataclass
-class SparseAccessor:  # TODO is this the same as Accessor
+class SparseAccessor(Property):  # TODO is this the same as Accessor
     bufferView: int = None
     byteOffset: int = None
     componentType: int = None
@@ -193,7 +271,7 @@ class SparseAccessor:  # TODO is this the same as Accessor
 
 @dataclass_json
 @dataclass
-class Sparse:
+class Sparse(Property):
     count: int = 0
     indices: SparseAccessor = None  # TODO this might be an Accessor but that would couple the classes
     values: SparseAccessor = None
@@ -201,7 +279,7 @@ class Sparse:
 
 @dataclass_json
 @dataclass
-class Accessor:
+class Accessor(Property):
     bufferView: int = None
     byteOffset: int = None
     componentType: int = None
@@ -215,7 +293,7 @@ class Accessor:
 
 @dataclass_json
 @dataclass
-class BufferView:
+class BufferView(Property):
     buffer: int = None
     byteOffset: int = None
     byteLength: int = None
@@ -226,14 +304,14 @@ class BufferView:
 
 @dataclass_json
 @dataclass
-class Buffer:
+class Buffer(Property):
     uri: str = ""
     byteLength: int = None
 
 
 @dataclass_json
 @dataclass
-class Perspective:
+class Perspective(Property):
     aspectRatio: float = None
     yfov: float = None
     zfar: float = None
@@ -242,7 +320,7 @@ class Perspective:
 
 @dataclass_json
 @dataclass
-class Orthographic:
+class Orthographic(Property):
     xmag: float = None
     ymag: float = None
     zfar: float = None
@@ -251,7 +329,7 @@ class Orthographic:
 
 @dataclass_json
 @dataclass
-class Camera:
+class Camera(Property):
     perspective: Perspective = None
     orthographic: Orthographic = None
     type: str = None
@@ -260,14 +338,14 @@ class Camera:
 
 @dataclass_json
 @dataclass
-class MaterialTexture:
+class MaterialTexture(Property):
     index: int = None
     texCoord: int = None
 
 
 @dataclass_json
 @dataclass
-class PbrMetallicRoughness:
+class PbrMetallicRoughness(Property):
     baseColorFactor: List[float] = field(default_factory=list)
     metallicFactor: float = None
     roughnessFactor: float = None
@@ -277,13 +355,7 @@ class PbrMetallicRoughness:
 
 @dataclass_json
 @dataclass
-class Extension:  # TODO: expand this out
-    pass
-
-
-@dataclass_json
-@dataclass
-class Material:
+class Material(Property):
     pbrMetallicRoughness: PbrMetallicRoughness = None
     normalTexture: MaterialTexture = None
     occlusionTexture: MaterialTexture = None
@@ -293,12 +365,11 @@ class Material:
     alphaCutoff: float = None
     doubleSided: bool = None
     name: str = None
-    extensions: Dict[str, Extension] = field(default_factory=dict)
 
 
 @dataclass_json
 @dataclass
-class Sampler:
+class Sampler(Property):
     """
     Samplers are stored in the samplers array of the asset.
     Each sampler specifies filter and wrapping options corresponding to the GL types
@@ -314,7 +385,7 @@ class Sampler:
 
 @dataclass_json
 @dataclass
-class Node:
+class Node(Property):
     mesh: int = None
     skin: int = None
     rotation: List[float] = field(default_factory=list)
@@ -328,7 +399,7 @@ class Node:
 
 @dataclass_json
 @dataclass
-class Skin:
+class Skin(Property):
     inverseBindMatrices: int = None
     skeleton: int = None
     joints: List[int] = field(default_factory=list)
@@ -337,21 +408,21 @@ class Skin:
 
 @dataclass_json
 @dataclass
-class Scene:
+class Scene(Property):
     name: str = ""
     nodes: List[int] = field(default_factory=list)
 
 
 @dataclass_json
 @dataclass
-class Texture:
+class Texture(Property):
     sampler: int = None
     source: int = None
 
 
 @dataclass_json
 @dataclass
-class Image:
+class Image(Property):
     uri: str = None
     mimeType: str = None
     bufferView: int = None
@@ -359,21 +430,21 @@ class Image:
 
 @dataclass_json
 @dataclass
-class Target:
+class Target(Property):
     node: int = None
     path: str = None
 
 
 @dataclass_json
 @dataclass
-class Channel:
+class Channel(Property):
     sampler: int = None
     target: Target = None
 
 
 @dataclass_json
 @dataclass
-class Animation:
+class Animation(Property):
     name: str = None
     channels:  List[Channel] = field(default_factory=list)
     samplers: List[Sampler] = field(default_factory=list)
@@ -515,30 +586,8 @@ class GLTF2:
         courtesy https://github.com/lidatong/dataclasses-json
         """
 
-        data = asdict(self)
-
-        def del_none(d):
-            """
-            Delete keys with the value ``None`` in a dictionary, recursively.
-
-            This alters the input so you may wish to ``copy`` the dict first.
-
-            Courtesy Chris Morgan and modified from:
-            https://stackoverflow.com/questions/4255400/exclude-empty-null-values-from-json-serialization
-            """
-            # For Python 3, write `list(d.items())`; `d.items()` won’t work
-            # For Python 2, write `d.items()`; `d.iteritems()` won’t work
-            for key, value in list(d.items()):
-                if value is None or (hasattr(value, '__iter__') and len(value) == 0):
-                    del d[key]
-                elif isinstance(value, dict):
-                    del_none(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict):
-                            del_none(item)
-            return d  # For convenience
-        data = del_none(data)
+        data = gltf_asdict(self)
+        data = delete_empty_keys(data)
         return json.dumps(data,
                           cls=JsonEncoder,
                           skipkeys=skipkeys,
@@ -569,7 +618,13 @@ class GLTF2:
                                  **kw)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            result = _decode_dataclass(cls, init_kwargs, infer_missing)
+            result = _decode_dataclass(cls, init_kwargs, infer_missing) #  type: GLTF2
+        for mesh in result.meshes:
+            for primitive in mesh.primitives:
+                raw_attributes = primitive.attributes
+                if raw_attributes:
+                    attributes = Attributes(**raw_attributes)
+                    primitive.attributes = attributes
         return result
 
     def gltf_to_json(self) -> str:

@@ -5,17 +5,31 @@ ln -s /home/user/projects/glTF-Sample-Models .
 
 To run:
 pytest tests.py
+
+To see with regular print statements:
+pytest tests.py -s
+
+A single test class:
+pytest tests.py::TextValidator
+
+
 """
 
 import base64
-
+from dataclasses import dataclass
 import pathlib
+import tempfile
+import warnings
 
-from pygltflib import GLTF2, Scene, Buffer, BufferFormat
+import pytest
+
+import pygltflib
+from pygltflib import GLTF2, Attributes, Buffer, BufferFormat, Mesh, Primitive, Scene
 from pygltflib.utils import add_primitive, add_indexed_geometry
 
 PATH = "glTF-Sample-Models"
 
+print(f"Testing version {pygltflib.__version__}")
 
 class TestValidator:
     def setup_method(self, _test_method):
@@ -40,6 +54,7 @@ class TestValidator:
         assert gltf.asset.version == "2.0"
         assert gltf.accessors[0].bufferView == 0
         assert gltf.accessors[4].bufferView == 4
+
 
 class TestOutput:
     def test_Box(self):
@@ -134,7 +149,6 @@ class TestBufferConversions:
         buffer_format = gltf.identify_uri(uri)
         assert buffer_format == BufferFormat.DATAURI
 
-
     def test_identify_binfile(self):
         gltf = GLTF2()
         uri = "test.bin"
@@ -147,7 +161,6 @@ class TestBufferConversions:
         uri = ''  # empty uri means data blob
         buffer_format = gltf.identify_uri(uri)
         assert buffer_format == BufferFormat.BINARYBLOB
-
 
     def test_buffer_conversions(self):
         buffer = Buffer()
@@ -177,3 +190,82 @@ class TestBufferConversions:
 
         assert gltf.buffers[0].uri == data
 
+
+class TestExtensions:
+    def test_load_mesh_primitive_extensions(self):
+        f = pathlib.Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
+        gltf = GLTF2().load(f)
+        assert gltf.meshes[0].primitives[0].extensions != None
+
+        extensions = gltf.meshes[0].primitives[0].extensions
+        assert "KHR_draco_mesh_compression" in extensions
+
+        extension = gltf.meshes[0].primitives[0].extensions["KHR_draco_mesh_compression"]
+        assert extension == {'bufferView': 0, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
+
+        extension = gltf.meshes[2].primitives[0].extensions["KHR_draco_mesh_compression"]
+        assert extension == {'bufferView': 2, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
+
+    def test_save_mesh_primitive_extensions(self):
+        f = pathlib.Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname)/"extensions.gltf"
+            gltf.save(t)
+            gltf2 = GLTF2().load(t)
+        extension = gltf2.meshes[2].primitives[0].extensions["KHR_draco_mesh_compression"]
+        assert extension == {'bufferView': 2, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
+
+
+class TestAttributes:
+    def basic_gltf(self):
+        g = GLTF2()
+        m = Mesh()
+        p = Primitive()
+
+        g.meshes.append(m)
+        m.primitives.append(p)
+
+        aa = Attributes()
+        aa._MYCUSTOMATTRIBUTE = 123
+        p.attributes = aa
+        return g
+
+    def test_application_specific_semantics_good(self):
+        aa = Attributes()
+
+        aa._MYCUSTOMATTRIBUTE = 123
+
+        data = aa.to_json()
+        result = '{"POSITION": null, "NORMAL": null, "TANGENT": null, "TEXCOORD_0": null, "TEXCOORD_1": null, "COLOR_0": null, "JOINTS_0": null, "WEIGHTS_0": null, "_MYCUSTOMATTRIBUTE": 123}'
+        assert data == result
+
+    def test_application_specific_semantics_bad(self):
+        aa = Attributes()
+
+        @dataclass
+        class CustomClass:
+            hello: str = "world"
+
+        aa._MYCUSTOMATTRIBUTE = CustomClass()
+
+        with pytest.raises(TypeError):
+            data = aa.to_json()
+
+    def test_attribute_inside_gltf(self):
+        gltf = self.basic_gltf()
+        data = gltf.gltf_to_json()
+        assert  '"attributes": {\n            "_MYCUSTOMATTRIBUTE": 123\n          }\n' in data
+
+    def test_attribute_save(self):
+        gltf = self.basic_gltf()
+        gltf.meshes[0].primitives[0].attributes._MYCUSTOMATTRIBUTE = 124
+        gltf.meshes[0].primitives[0].attributes.POSITION = 1
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname)/"attributes.gltf"
+            gltf.save(t)
+            gltf2 = GLTF2().load(t)
+
+        attributes = gltf2.meshes[0].primitives[0].attributes
+        assert attributes.POSITION == 1
+        assert attributes._MYCUSTOMATTRIBUTE == 124

@@ -212,6 +212,7 @@ def add_indexed_geometry(gltf, indices, vertices):
     accessor2.max = [1.0, 1.0, 0.0]
     accessor2.min = [0.0, 0.0, 0.0]
 
+    primitive.attributes = Attributes()
     primitive.attributes.POSITION = 1
     node.mesh = 0
     scene = None
@@ -277,6 +278,7 @@ def add_primitive(_gltf):
     accessor2 = Accessor()
 
     # add data
+    primitive.attributes = Attributes()
     primitive.attributes.POSITION = 1
 
     buffer.uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="

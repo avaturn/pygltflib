@@ -85,6 +85,15 @@ from pygltflib.utils import glb2gltf, gltf2glb
 glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
 ```
 
+#### Access an extension?
+```python3
+# on a primitve
+gltf.meshes[0].primitives[0].extensions['KHR_draco_mesh_compression']
+
+# on a material
+gltf.materials[0].extensions['ADOBE_materials_thin_transparency']
+
+```
 
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
@@ -116,6 +125,13 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.6
+    * add support for extensions
+    * add support for extras
+    * add support for custom attributes on Attributes
+    * set Primitive.attributes to `None` by default (use `primitive.attributes = Attributes()`)
+    * add lots of tests
+
 * 1.11.5
     * reorder `identify_uri` to avoid using lengthy byte strings as file names
     * assign parent path when saving so bin files save to same path
@@ -365,6 +381,20 @@ Warning: Unable to save data uri to glb format.
 >>> gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
 >>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
 ```
+
+
+#### Extensions
+The GLTF2 spec allows for extensions to added to any component of a GLTF file.
+
+As of writing (August 2019) there are [about a dozen extensions from Khronos and other vendors](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/)
+
+
+In pygltflib, extensions are loaded as ordinary `dict` objects and so should be accessed like regular key,value pairs.
+
+For example `extensions["KHR_draco_mesh_compression"]["bufferView"]` instead of `extensions["KHR_draco_mesh_compression"].bufferView`.
+
+This allows future extensions to be automatically supported by pygltflib.
+
 
 ## Running the tests
 
