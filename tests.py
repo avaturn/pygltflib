@@ -71,23 +71,16 @@ class TestIO:
             f = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
             glb1 = GLTF2().load(r)
 
-#            t = pathlib.Path(tmpdirname) / "glb2glb.glb"
-            t = "boxglb2glb.glb"
+            t = pathlib.Path(tmpdirname) / "glb2glb.glb"
             glb1.save(t)
             glb2 = GLTF2().load(t)
 
             reference.convert_buffers(BufferFormat.DATAURI)
             glb2.convert_buffers(BufferFormat.DATAURI)
 
-            reference.save("refglb2gltf.gltf")
-            glb2.save("boxglb2gltf.gltf")
+            assert glb2.binary_blob() == reference.binary_blob() == None
 
-
-            print("")
-            print("ref",reference)
-            print("glb",glb2)
-
-            assert glb2.binary_blob() == reference.binary_blob()
+            assert glb2.buffers == reference.buffers
 
         #assert glb2.binary_blob() == reference.binary_blob()
 
