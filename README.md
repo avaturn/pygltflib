@@ -137,6 +137,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.7
+    * fix missing `normalized` flag on Accessor
+
 * 1.11.6
     * add support for extensions
     * add support for extras

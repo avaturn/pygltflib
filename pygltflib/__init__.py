@@ -48,7 +48,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.6"
+__version__ = "1.11.7"
 
 """
 About the GLTF2 file format:
@@ -283,6 +283,7 @@ class Accessor(Property):
     bufferView: int = None
     byteOffset: int = None
     componentType: int = None
+    normalized: bool = None
     count: int = None
     type: str = None
     sparse: Sparse = None
