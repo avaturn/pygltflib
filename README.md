@@ -138,7 +138,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 #### Changelog
 * 1.11.7
-    * fix missing `normalized` flag on Accessor
+    * add missing `normalized` flag to Accessor
 
 * 1.11.6
     * add support for extensions
