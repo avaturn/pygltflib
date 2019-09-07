@@ -363,3 +363,23 @@ class TestBuffers:
 
 
 
+class TestExtensions:
+    def test_top_level(self):
+        gltf = GLTF2()
+        gltf.extensionsUsed = extensionsUsed = [
+        "KHR_lights_punctual"
+        ]
+        gltf.extensionsRequired = extensionsRequired = [
+        "KHR_lights_punctual"
+        ]
+        gltf.extensions = extensions = {
+            "KHR_lights_punctual" : {
+            "lights" : [ {} ]
+            }
+        }
+
+        gltf = gltf.gltf_from_json(gltf.gltf_to_json())
+
+        assert gltf.extensionsUsed == extensionsUsed
+        assert gltf.extensionsRequired == extensionsRequired
+        assert gltf.extensions == extensions

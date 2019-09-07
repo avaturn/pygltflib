@@ -124,6 +124,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Add helper functions for creating meshes
 * Test coverage
 * Enforce single underscore on custom Attribute attributes 
+* Investigate creating classes from extensions
 * Automated validation and visual inspection
 
 #### Contributors
@@ -132,11 +133,15 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Arthur van Hoff
 * Arifullah Jan
 * Daniel Haehn
+* Jon Time
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.8
+    * add missing top level extensions
+    
 * 1.11.7
     * add missing `normalized` flag to Accessor
 

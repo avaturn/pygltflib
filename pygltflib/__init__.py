@@ -48,7 +48,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.7"
+__version__ = "1.11.8"
 
 """
 About the GLTF2 file format:
@@ -452,7 +452,7 @@ class Animation(Property):
 
 
 @dataclass
-class GLTF2:
+class GLTF2(Property):
     accessors: List[Accessor] = field(default_factory=list)
     animations: List[Animation] = field(default_factory=list)
     asset: Asset = field(default_factory=Asset)
@@ -736,9 +736,13 @@ class GLTF2:
             return self.save_json(fname)
 
     @staticmethod
+    def gltf_from_json(json_data):
+        return GLTF2.from_json(json_data, infer_missing=True)
+
+    @staticmethod
     def load_json(fname):
         with open(fname, "r") as f:
-            obj = GLTF2.from_json(f.read(), infer_missing=True)
+            obj = GLTF2.gltf_from_json(f.read())
         return obj
 
     @staticmethod
