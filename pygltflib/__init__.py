@@ -47,7 +47,6 @@ try:
 except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
-
 __version__ = "1.11.8"
 
 """
@@ -61,7 +60,6 @@ Positive rotation is counterclockwise.
 """
 
 A = TypeVar('A')
-
 
 LINEAR = "LINEAR"
 STEP = "STEP"
@@ -79,7 +77,7 @@ MAT4 = "MAT4"
 BYTE = 5120  # 1
 UNSIGNED_BYTE = 5121  # 1
 SHORT = 5122  # 2
-UNSIGNED_SHORT = 5123   # 2 unsigned short (2 bytes)
+UNSIGNED_SHORT = 5123  # 2 unsigned short (2 bytes)
 UNSIGNED_INT = 5125  # 4
 FLOAT = 5126  # 4 single precision float (4 bytes)
 
@@ -103,8 +101,8 @@ JSON = "JSON"
 BIN = "BIN\x00"
 MAGIC = b'glTF'
 GLTF_VERSION = 2  # version this library exports
-GLTF_MIN_VERSION = 2   # minimum version this library can load
-GLTF_MAX_VERSION = 2   # maximum supported version this library can load
+GLTF_MIN_VERSION = 2  # minimum version this library can load
+GLTF_MAX_VERSION = 2  # maximum supported version this library can load
 
 DATA_URI_HEADER = "data:application/octet-stream;base64,"
 
@@ -157,7 +155,7 @@ def dataclass_json(cls, *args, **kwargs):
     except TypeError:  # dataclass-json < 0.2.8
         try:
             dclass = _dataclass_json(cls)
-        except TypeError: # dataclass-json == 0.2.8
+        except TypeError:  # dataclass-json == 0.2.8
             warnings.warn("Please upgrade your version of dataclasses-json.")
             dclass = _dataclass_json(cls, decode_letter_case=LetterCase.CAMEL, encode_letter_case=LetterCase.CAMEL)
     return dclass
@@ -204,18 +202,18 @@ class Asset:
 # Attributes is a special case so we provide our own json handling
 class Attributes:
     def __init__(self,
-            POSITION = None,
-            NORMAL = None,
-            TANGENT = None,
-            TEXCOORD_0 = None,
-            TEXCOORD_1 = None,
-            COLOR_0: int = None,
-            JOINTS_0: int = None,
-            WEIGHTS_0 = None, *args, **kwargs):
+                 POSITION=None,
+                 NORMAL=None,
+                 TANGENT=None,
+                 TEXCOORD_0=None,
+                 TEXCOORD_1=None,
+                 COLOR_0: int = None,
+                 JOINTS_0: int = None,
+                 WEIGHTS_0=None, *args, **kwargs):
         self.POSITION = POSITION
         self.NORMAL = NORMAL
         self.TANGENT = TANGENT
-        self.TEXCOORD_0 =  TEXCOORD_0
+        self.TEXCOORD_0 = TEXCOORD_0
         self.TEXCOORD_1 = TEXCOORD_1
         self.COLOR_0 = COLOR_0
         self.JOINTS_0 = JOINTS_0
@@ -224,7 +222,7 @@ class Attributes:
             setattr(self, key, value)
 
     def __repr__(self):
-        return self.__class__.__qualname__ + f'(' + ', '.join([f"{f}={v}" for f,v in self.__dict__.items()]) + ')'
+        return self.__class__.__qualname__ + f'(' + ', '.join([f"{f}={v}" for f, v in self.__dict__.items()]) + ')'
 
     def to_json(self, *args, **kwargs):
         # Attributes objects can have custom attrs, so use our own json conversion methods.
@@ -447,7 +445,7 @@ class Channel(Property):
 @dataclass
 class Animation(Property):
     name: str = None
-    channels:  List[Channel] = field(default_factory=list)
+    channels: List[Channel] = field(default_factory=list)
     samplers: List[Sampler] = field(default_factory=list)
 
 
@@ -619,7 +617,7 @@ class GLTF2(Property):
                                  **kw)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            result = _decode_dataclass(cls, init_kwargs, infer_missing) #  type: GLTF2
+            result = _decode_dataclass(cls, init_kwargs, infer_missing)  # type: GLTF2
         for mesh in result.meshes:
             for primitive in mesh.primitives:
                 raw_attributes = primitive.attributes
@@ -762,18 +760,18 @@ class GLTF2(Property):
         i = 0
         obj = None
         while index < length:
-            chunk_length = struct.unpack("<I", data[index:index+4])[0]
+            chunk_length = struct.unpack("<I", data[index:index + 4])[0]
             index += 4
-            chunk_type = bytearray(struct.unpack("<BBBB", data[index:index+4])).decode()
+            chunk_type = bytearray(struct.unpack("<BBBB", data[index:index + 4])).decode()
             index += 4
             if chunk_type not in [JSON, BIN]:
                 warnings.warn(f"Ignoring chunk {i} with unknown type '{chunk_type}', probably glTF extensions. "
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
             elif chunk_type == JSON:
-                raw_json = data[index:index+chunk_length].decode("utf-8")
+                raw_json = data[index:index + chunk_length].decode("utf-8")
                 obj = GLTF2.from_json(raw_json, infer_missing=True)
             else:
-                obj._glb_data = data[index:index+chunk_length]
+                obj._glb_data = data[index:index + chunk_length]
             index += chunk_length
             i += 1
         if not obj:
