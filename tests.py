@@ -62,6 +62,22 @@ class TestIO:
         r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
         reference = GLTF2().load(r)
         assert len(reference.buffers) == 1
+        assert type(reference) == GLTF2
+
+    def test_load_glb_static(self):
+        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        reference = GLTF2.load(r)
+        assert len(reference.buffers) == 1
+        assert type(reference) == GLTF2
+
+    def test_load_glb_class(self):
+        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+
+        class GLTFGoose(GLTF2):
+            pass
+        reference = GLTFGoose.load(r)
+        assert len(reference.buffers) == 1
+        assert type(reference) == GLTFGoose
 
     def test_save_glb2glb(self):
         with tempfile.TemporaryDirectory() as tmpdirname:

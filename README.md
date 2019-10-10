@@ -139,10 +139,13 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.11.10
+    * convert load methods from staticmethod to classmethods
+
 * 1.11.9
     * change GLTF.load to a staticmethod
     * add AlphaMode enum type
-    
+
 * 1.11.8
     * add missing top level extensions
     

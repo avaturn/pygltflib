@@ -47,7 +47,7 @@ try:
 except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
-__version__ = "1.11.9"
+__version__ = "1.11.10"
 
 """
 About the GLTF2 file format:
@@ -741,18 +741,18 @@ class GLTF2(Property):
                     "and this will be saved to a .bin file next to the json file.")
             return self.save_json(fname)
 
-    @staticmethod
-    def gltf_from_json(json_data):
-        return GLTF2.from_json(json_data, infer_missing=True)
+    @classmethod
+    def gltf_from_json(cls, json_data):
+        return cls.from_json(json_data, infer_missing=True)
 
-    @staticmethod
-    def load_json(fname):
+    @classmethod
+    def load_json(cls, fname):
         with open(fname, "r") as f:
-            obj = GLTF2.gltf_from_json(f.read())
+            obj = cls.gltf_from_json(f.read())
         return obj
 
-    @staticmethod
-    def load_binary(fname):
+    @classmethod
+    def load_binary(cls, fname):
         with open(fname, "rb") as f:
             data = f.read()
         magic = struct.unpack("<BBBB", data[:4])
@@ -777,7 +777,7 @@ class GLTF2(Property):
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
             elif chunk_type == JSON:
                 raw_json = data[index:index + chunk_length].decode("utf-8")
-                obj = GLTF2.from_json(raw_json, infer_missing=True)
+                obj = cls.from_json(raw_json, infer_missing=True)
             else:
                 obj._glb_data = data[index:index + chunk_length]
             index += chunk_length
@@ -799,17 +799,17 @@ class GLTF2(Property):
 
         return obj
 
-    @staticmethod
-    def load(fname):
+    @classmethod
+    def load(cls, fname):
         path = Path(fname)
         if not path.is_file():
             print("ERROR: File not found", fname)
             return None
         ext = path.suffix
         if ext.lower() in [".bin", ".glb"]:
-            obj = GLTF2.load_binary(fname)
+            obj = cls.load_binary(fname)
         else:
-            obj = GLTF2.load_json(fname)
+            obj = cls.load_json(fname)
         obj._path = path
         return obj
 
