@@ -48,7 +48,7 @@ except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
 
-__version__ = "1.11.8"
+__version__ = "1.11.9"
 
 """
 About the GLTF2 file format:
@@ -120,6 +120,12 @@ class LetterCase(Enum):
     CAMEL = 'camelCase'
     KEBAB = 'kebab-case'
     SNAKE = 'snake_case'
+
+
+class AlphaMode(Enum):
+    BLEND = "BLEND"
+    MASK = "MASK"
+    OPAQUE = "OPAQUE"
 
 
 def delete_empty_keys(dictionary):
@@ -793,16 +799,17 @@ class GLTF2(Property):
 
         return obj
 
-    def load(self, fname):
+    @staticmethod
+    def load(fname):
         path = Path(fname)
         if not path.is_file():
             print("ERROR: File not found", fname)
             return None
         ext = path.suffix
         if ext.lower() in [".bin", ".glb"]:
-            obj = self.load_binary(fname)
+            obj = GLTF2.load_binary(fname)
         else:
-            obj = self.load_json(fname)
+            obj = GLTF2.load_json(fname)
         obj._path = path
         return obj
 
