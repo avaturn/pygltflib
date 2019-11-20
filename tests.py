@@ -7,7 +7,7 @@ To run:
 pytest tests.py
 
 To see with regular print statements:
-pytest tests.py -s
+pytest -s tests.py
 
 A single test class:
 pytest tests.py::TextValidator
@@ -18,6 +18,7 @@ pytest tests.py::TextValidator
 import base64
 from dataclasses import dataclass
 import pathlib
+import shutil
 import tempfile
 import warnings
 
@@ -264,6 +265,19 @@ class TestBufferConversions:
         # datauri to binary
         embedded.convert_buffers(BufferFormat.BINARYBLOB)
         assert binary.buffers == embedded.buffers
+
+    def test_buffer_conversions_binfile(self):
+        src = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            dest = pathlib.Path(tmpdirname) / "Box.gltf"
+            bindest = pathlib.Path(tmpdirname) / "Box.glb"
+            shutil.copy(str(src), str(dest))
+            embedded = GLTF2().load(dest)
+
+            embedded.convert_buffers(BufferFormat.BINFILE)
+            embedded.save(bindest)
+
+            assert (pathlib.Path(tmpdirname) / "0.bin").is_file()
 
 
 class TestExtensions:

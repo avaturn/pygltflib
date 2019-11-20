@@ -47,7 +47,7 @@ try:
 except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
-__version__ = "1.11.10"
+__version__ = "1.12.0"
 
 """
 About the GLTF2 file format:
@@ -493,7 +493,7 @@ class GLTF2(Property):
         Loads a file pointed to by a uri
         """
         path = getattr(self, "_path", Path())
-        with open(Path(path.parent, uri), 'rb') as fb:
+        with open(Path(path, uri), 'rb') as fb:
             data = fb.read()
         return data
 
@@ -523,7 +523,7 @@ class GLTF2(Property):
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         elif uri.startswith("data"):
             uri_format = BufferFormat.DATAURI
-        elif Path(path.parent, uri).is_file():
+        elif Path(path, uri).is_file():
             uri_format = BufferFormat.BINFILE
         else:
             warnings.warn("pygltf.GLTF.identify_buffer_format can not identify buffer."
@@ -568,13 +568,12 @@ class GLTF2(Property):
                 buffer.uri = f'{DATA_URI_HEADER}{data}'
             elif buffer_format == BufferFormat.BINFILE:
                 filename = Path(f"{i}").with_suffix(".bin")
-                path = getattr(self, "_path", Path())
-                path = path.joinpath(filename)
+                binfile_path = getattr(self, "_path", Path()) / filename
                 buffer.uri = str(filename)
-                if path.is_file() and not override:
-                    warnings.warn(f"Unable to write buffer file, a file already exists at {path}")
+                if binfile_path.is_file() and not override:
+                    warnings.warn(f"Unable to write buffer file, a file already exists at {binfile_path}")
                     continue
-                with open(path, "wb") as f:  # save bin file with the gltf file
+                with open(binfile_path, "wb") as f:  # save bin file with the gltf file
                     f.write(data)
 
     def to_json(self,
@@ -677,8 +676,8 @@ class GLTF2(Property):
                                   "please save in gltf format instead or use the convert_buffers method first."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     return False
-                elif Path(path.parent, buffer.uri).is_file():
-                    with open(Path(path.parent, buffer.uri), 'rb') as fb:
+                elif Path(path, buffer.uri).is_file():
+                    with open(Path(path, buffer.uri), 'rb') as fb:
                         data = fb.read()
                 else:
                     warnings.warn(f"Unable to save bufferView {buffer.uri[:20]} to glb, skipping. "
@@ -731,6 +730,7 @@ class GLTF2(Property):
     def save(self, fname, asset=Asset()):
         self.asset = asset
         self._path = Path(fname).parent
+        self._name = Path(fname).name
         ext = Path(fname).suffix
         if ext.lower() in [".glb"]:
             return self.save_binary(fname)
@@ -810,7 +810,8 @@ class GLTF2(Property):
             obj = cls.load_binary(fname)
         else:
             obj = cls.load_json(fname)
-        obj._path = path
+        obj._path = path.parent
+        obj._name = path.name
         return obj
 
 
