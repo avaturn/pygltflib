@@ -126,6 +126,13 @@ REPEAT = 10497
 
 WRAPPING_MODES = [CLAMP_TO_EDGE, MIRRORED_REPEAT, REPEAT]
 
+
+IMAGEJPEG = 'image/jpeg'
+IMAGEPNG = "image/png"
+
+IMAGE_MIMETYPES = [IMAGEJPEG, IMAGEPNG]
+
+
 NEAREST = 9728
 LINEAR = 9729
 NEAREST_MIPMAP_NEAREST = 9984
@@ -204,8 +211,6 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-    if obj in ComponentType:
-        return obj.value
     raise TypeError("Type %s not serializable" % type(obj))
 
 
@@ -517,8 +522,9 @@ class Scene(Property):
 @dataclass_json
 @dataclass
 class Texture(Property):
-    sampler: int = None
-    source: int = None
+    sampler: Optional[int] = None
+    source: Optional[int] = None
+    name: Optional[str] = ""
 
 
 @dataclass_json
