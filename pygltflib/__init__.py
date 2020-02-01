@@ -31,12 +31,14 @@ from dataclasses import (
     fields,
 )
 from datetime import date, datetime
+from deprecated import deprecated
 from enum import Enum
 import json
 from pathlib import Path
 from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
+import sys
 import warnings
 
 from dataclasses_json import dataclass_json as _dataclass_json
@@ -47,7 +49,7 @@ try:
 except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
     from dataclasses_json.core import _CollectionEncoder as JsonEncoder
 
-__version__ = "1.12.0"
+__version__ = "1.13.0"
 
 """
 About the GLTF2 file format:
@@ -74,16 +76,40 @@ MAT2 = "MAT2"
 MAT3 = "MAT3"
 MAT4 = "MAT4"
 
-BYTE = 5120  # 1
-UNSIGNED_BYTE = 5121  # 1
-SHORT = 5122  # 2
-UNSIGNED_SHORT = 5123  # 2 unsigned short (2 bytes)
-UNSIGNED_INT = 5125  # 4
-FLOAT = 5126  # 4 single precision float (4 bytes)
+BYTE = 5120
+UNSIGNED_BYTE = 5121
+SHORT = 5122
+UNSIGNED_SHORT = 5123
+UNSIGNED_INT = 5125
+FLOAT = 5126
+
+COMPONENT_TYPES = [BYTE, UNSIGNED_BYTE, SHORT, UNSIGNED_SHORT, UNSIGNED_INT, FLOAT]
+ACCESSOR_SPARSE_INDICES_COMPONENT_TYPES = [UNSIGNED_BYTE, UNSIGNED_SHORT, UNSIGNED_INT]
+
+# MESH PRIMITIVE MODES
+POINTS = 0
+LINES = 1
+LINE_LOOP = 2
+LINE_STRIP = 3
+TRIANGLES = 4
+TRIANGLE_STRIP = 5
+TRIANGLE_FAN = 6
+
+MESH_PRIMITIVE_MODES = [POINTS, LINES, LINE_LOOP, LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN]
 
 # The bufferView target that the GPU buffer should be bound to.
 ARRAY_BUFFER = 34962  # eg vertex data
 ELEMENT_ARRAY_BUFFER = 34963  # eg index data
+
+BUFFERVIEW_TARGETS = [ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER]
+
+
+TRANSLATION = "translation"
+ROTATION = "rotation"
+SCALE = "scale"
+WEIGHTS = "weights"
+
+ANIMATION_CHANNEL_TARGET_PATHS = [TRANSLATION, ROTATION, SCALE, WEIGHTS]
 
 POSITION = "POSITION"
 NORMAL = "NORMAL"
@@ -94,8 +120,41 @@ COLOR_0 = "COLOR_0"
 JOINTS_0 = "JOINTS_0"
 WEIGHTS_0 = "WEIGHTS_0"
 
+CLAMP_TO_EDGE = 33071
+MIRRORED_REPEAT = 33648
+REPEAT = 10497
+
+WRAPPING_MODES = [CLAMP_TO_EDGE, MIRRORED_REPEAT, REPEAT]
+
+NEAREST = 9728
+LINEAR = 9729
+NEAREST_MIPMAP_NEAREST = 9984
+LINEAR_MIPMAP_NEAREST = 9985
+NEAREST_MIPMAP_LINEAR = 9986
+LINEAR_MIPMAP_LINEAR = 9987
+
+MAGNIFICATION_FILTERS = [NEAREST, LINEAR]
+MINIFICATION_FILTERS = [NEAREST, LINEAR, NEAREST_MIPMAP_NEAREST, LINEAR_MIPMAP_NEAREST, NEAREST_MIPMAP_LINEAR, LINEAR_MIPMAP_LINEAR]
+
 PERSPECTIVE = "perspective"
 ORTHOGRAPHIC = "orthographic"
+
+CAMERA_TYPES = [PERSPECTIVE, ORTHOGRAPHIC]
+
+
+BLEND = "BLEND"
+MASK = "MASK"
+OPAQUE = "OPAQUE"
+
+MATERIAL_ALPHAMODES = [OPAQUE, MASK, BLEND]
+
+
+@deprecated("Please use the pygltflib.BLEND, pygltflib.MASK, pygltflib.OPAQUE constants directly.")
+class AlphaMode(Enum):
+    BLEND = "BLEND"
+    MASK = "MASK"
+    OPAQUE = "OPAQUE"
+
 
 JSON = "JSON"
 BIN = "BIN\x00"
@@ -118,12 +177,6 @@ class LetterCase(Enum):
     CAMEL = 'camelCase'
     KEBAB = 'kebab-case'
     SNAKE = 'snake_case'
-
-
-class AlphaMode(Enum):
-    BLEND = "BLEND"
-    MASK = "MASK"
-    OPAQUE = "OPAQUE"
 
 
 def delete_empty_keys(dictionary):
@@ -151,7 +204,8 @@ def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-
+    if obj in ComponentType:
+        return obj.value
     raise TypeError("Type %s not serializable" % type(obj))
 
 
@@ -199,10 +253,18 @@ def _asdict_inner(obj, dict_factory):
 
 @dataclass_json
 @dataclass
-class Asset:
-    generator: str = f"pygltflib@v{__version__}"
-    copyright: str = None
-    version: str = "2.0"
+class Property:
+    extensions: Optional[Dict[str, Any]] = field(default_factory=dict)
+    extras: Optional[Dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass_json
+@dataclass
+class Asset(Property):
+    generator: Optional[str] = f"pygltflib@v{__version__}"
+    copyright: Optional[str] = None
+    version: str = "2.0"  # required
+    minVersion: Optional[str] = None
 
 
 # Attributes is a special case so we provide our own json handling
@@ -243,134 +305,167 @@ class Attributes:
 
 @dataclass_json
 @dataclass
-class Property:
-    extensions: Dict[str, Any] = field(default_factory=dict)
-    extras: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass_json
-@dataclass
 class Primitive(Property):
-    attributes: Attributes = None
-    indices: int = None
-    mode: int = None
-    material: int = None
-    targets: List[Attributes] = field(default_factory=list)
+    attributes: Attributes = None  # required
+    indices: Optional[int] = None
+    mode: Optional[int] = TRIANGLES
+    material: Optional[int] = None
+    targets: Optional[List[Attributes]] = field(default_factory=list)
 
 
 @dataclass_json
 @dataclass
 class Mesh(Property):
-    primitives: List[Primitive] = field(default_factory=list)
-    weights: List[float] = field(default_factory=list)
-    name: str = None
+    primitives: List[Primitive] = field(default_factory=list)  # required
+    weights: Optional[List[float]] = field(default_factory=list)
+    name: Optional[str] = None
+
+
+@deprecated("Please use AccessorSparseIndices and AccessorSparseValues instead")
+@dataclass_json
+@dataclass
+class SparseAccessor(Property):
+    bufferView: int = None  # required
+    byteOffset: Optional[int] = 0
+    componentType: int = None  # required
 
 
 @dataclass_json
 @dataclass
-class SparseAccessor(Property):  # TODO is this the same as Accessor
-    bufferView: int = None
-    byteOffset: int = None
-    componentType: int = None
+class AccessorSparseIndices(Property):
+    bufferView: int = None  # required
+    byteOffset: Optional[int] = 0
+    componentType: int = None  # required
+
+
+@dataclass_json
+@dataclass
+class AccessorSparseValues(Property):
+    bufferView: int = None  # required
+    byteOffset: Optional[int] = 0
 
 
 @dataclass_json
 @dataclass
 class Sparse(Property):
-    count: int = 0
-    indices: SparseAccessor = None  # TODO this might be an Accessor but that would couple the classes
-    values: SparseAccessor = None
+    count: int = None  # required
+    indices: AccessorSparseIndices = None  # required
+    values: AccessorSparseValues = None  # required
 
 
 @dataclass_json
 @dataclass
 class Accessor(Property):
-    bufferView: int = None
-    byteOffset: int = None
-    componentType: int = None
-    normalized: bool = None
-    count: int = None
-    type: str = None
-    sparse: Sparse = None
-    max: List[float] = field(default_factory=list)
-    min: List[float] = field(default_factory=list)
-    name: str = None
+    bufferView: Optional[int] = None
+    byteOffset: Optional[int] = 0
+    componentType: int = None  # required
+    normalized: Optional[bool] = False
+    count: int = None  # required
+    type: str = None  # required
+    sparse: Optional[Sparse] = None
+    max: Optional[List[float]] = field(default_factory=list)
+    min: Optional[List[float]] = field(default_factory=list)
+    name: Optional[str] = None
 
 
 @dataclass_json
 @dataclass
 class BufferView(Property):
     buffer: int = None
-    byteOffset: int = None
+    byteOffset: Optional[int] = 0
     byteLength: int = None
-    byteStride: int = None
-    target: int = None
-    name: str = None
+    byteStride: Optional[int] = None
+    target: Optional[int] = None
+    name: Optional[str] = None
 
 
 @dataclass_json
 @dataclass
 class Buffer(Property):
-    uri: str = ""
+    uri: Optional[str] = ""
     byteLength: int = None
 
 
 @dataclass_json
 @dataclass
 class Perspective(Property):
-    aspectRatio: float = None
-    yfov: float = None
-    zfar: float = None
-    znear: float = None
+    aspectRatio: Optional[float] = None
+    yfov: float = None  # required
+    zfar: Optional[float] = None
+    znear: float = None  # required
 
 
 @dataclass_json
 @dataclass
 class Orthographic(Property):
-    xmag: float = None
-    ymag: float = None
-    zfar: float = None
-    znear: float = None
+    xmag: float = None  # required
+    ymag: float = None  # required
+    zfar: float = None  # required
+    znear: float = None  # required
 
 
 @dataclass_json
 @dataclass
 class Camera(Property):
-    perspective: Perspective = None
-    orthographic: Orthographic = None
+    perspective: Optional[Perspective] = None
+    orthographic: Optional[Orthographic] = None
     type: str = None
-    name: str = None
+    name: Optional[str] = None
+
+
+@deprecated("Please use TextureInfo instead.")
+@dataclass_json
+@dataclass
+class MaterialTexture(Property):
+    index: int = None  # required
+    texCoord: Optional[int] = 0
 
 
 @dataclass_json
 @dataclass
-class MaterialTexture(Property):
-    index: int = None
-    texCoord: int = None
+class TextureInfo(Property):
+    index: int = None  # required
+    texCoord: Optional[int] = 0
+
+
+@dataclass_json
+@dataclass
+class OcclusionTextureInfo(Property):
+    index: Optional[int] = None
+    texCoord: Optional[int] = None
+    strength: Optional[float] = 1.0
+
+
+@dataclass_json
+@dataclass
+class NormalMaterialTexture(Property):
+    index: Optional[int] = None
+    texCoord: Optional[int] = None
+    scale: Optional[float] = 1.0
 
 
 @dataclass_json
 @dataclass
 class PbrMetallicRoughness(Property):
-    baseColorFactor: List[float] = field(default_factory=list)
-    metallicFactor: float = None
-    roughnessFactor: float = None
-    baseColorTexture: MaterialTexture = None
-    metallicRoughnessTexture: MaterialTexture = None
+    baseColorFactor: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    metallicFactor: Optional[float] = 1.0
+    roughnessFactor: Optional[float] = 1.0
+    baseColorTexture: Optional[TextureInfo] = None
+    metallicRoughnessTexture: Optional[MaterialTexture] = None
 
 
 @dataclass_json
 @dataclass
 class Material(Property):
-    pbrMetallicRoughness: PbrMetallicRoughness = None
-    normalTexture: MaterialTexture = None
-    occlusionTexture: MaterialTexture = None
-    emissiveFactor: List[float] = field(default_factory=list)
-    emissiveTexture: MaterialTexture = None
-    alphaMode: str = None
-    alphaCutoff: float = None
-    doubleSided: bool = None
-    name: str = None
+    pbrMetallicRoughness: Optional[PbrMetallicRoughness] = None
+    normalTexture: Optional[NormalMaterialTexture] = None
+    occlusionTexture: Optional[OcclusionTextureInfo] = None
+    emissiveFactor: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    emissiveTexture: Optional[TextureInfo] = None
+    alphaMode: Optional[str] = OPAQUE
+    alphaCutoff: Optional[float] = 0.5
+    doubleSided: Optional[bool] = False
+    name: Optional[str] = None
 
 
 @dataclass_json
@@ -380,43 +475,43 @@ class Sampler(Property):
     Samplers are stored in the samplers array of the asset.
     Each sampler specifies filter and wrapping options corresponding to the GL types
     """
-    input: int = None
-    interpolation: str = None
-    output: int = None
-    magFilter: int = None
-    minFilter: int = None
-    wrapS: int = None  # repeat wrapping in S (U)
-    wrapT: int = None  # repeat wrapping in T (V)
+    input: Optional[int] = None
+    interpolation: Optional[str] = None
+    output: Optional[int] = None
+    magFilter: Optional[int] = None
+    minFilter: Optional[int] = None
+    wrapS: Optional[int] = REPEAT  # repeat wrapping in S (U)
+    wrapT: Optional[int] = REPEAT  # repeat wrapping in T (V)
 
 
 @dataclass_json
 @dataclass
 class Node(Property):
-    mesh: int = None
-    skin: int = None
-    rotation: List[float] = field(default_factory=list)
-    translation: List[float] = field(default_factory=list)
-    scale: List[float] = field(default_factory=list)
-    children: List[int] = field(default_factory=list)
-    matrix: List[float] = field(default_factory=list)
-    camera: int = None
-    name: str = None
+    mesh: Optional[int] = None
+    skin: Optional[int] = None
+    rotation: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0, 1.0])
+    translation: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    scale: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    children: Optional[List[int]] = field(default_factory=list)
+    matrix: Optional[List[float]] = field(default_factory=lambda: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],)
+    camera: Optional[int] = None
+    name: Optional[str] = None
 
 
 @dataclass_json
 @dataclass
 class Skin(Property):
-    inverseBindMatrices: int = None
-    skeleton: int = None
-    joints: List[int] = field(default_factory=list)
-    name: str = None
+    inverseBindMatrices: Optional[int] = None
+    skeleton: Optional[int] = None
+    joints: Optional[List[int]] = field(default_factory=list)
+    name: Optional[str] = None
 
 
 @dataclass_json
 @dataclass
 class Scene(Property):
-    name: str = ""
-    nodes: List[int] = field(default_factory=list)
+    name: Optional[str] = ""
+    nodes: Optional[List[int]] = field(default_factory=list)
 
 
 @dataclass_json
@@ -436,31 +531,39 @@ class Image(Property):
 
 @dataclass_json
 @dataclass
-class Target(Property):
-    node: int = None
-    path: str = None
+class AnimationChannelTarget(Property):
+    node: Optional[int] = None
+    path: str = None  # required
 
 
 @dataclass_json
 @dataclass
-class Channel(Property):
-    sampler: int = None
-    target: Target = None
+class AnimationSampler(Property):
+    input: int = None  # required
+    interpolation: Optional[str] = LINEAR
+    output: int = None  # required
+
+
+@dataclass_json
+@dataclass
+class AnimationChannel(Property):
+    sampler: int = None  # required
+    target: AnimationChannelTarget = None  # required
 
 
 @dataclass_json
 @dataclass
 class Animation(Property):
-    name: str = None
-    channels: List[Channel] = field(default_factory=list)
-    samplers: List[Sampler] = field(default_factory=list)
+    name: Optional[str] = None
+    channels: List[AnimationChannel] = field(default_factory=list)
+    samplers: List[AnimationSampler] = field(default_factory=list)
 
 
 @dataclass
 class GLTF2(Property):
     accessors: List[Accessor] = field(default_factory=list)
     animations: List[Animation] = field(default_factory=list)
-    asset: Asset = field(default_factory=Asset)
+    asset: Asset = field(default_factory=Asset)  # required
     bufferViews: List[BufferView] = field(default_factory=list)
     buffers: List[Buffer] = field(default_factory=list)
     cameras: List[Camera] = field(default_factory=list)

@@ -372,3 +372,81 @@ def glb2gltf(source, destination=None, override=False):
         GLTF2().load(str(path)).save_json(str(destination))
     return True
 
+
+###
+# Validator
+###
+
+class GLTFValidatorException(Exception):
+    pass
+
+
+class InvalidAcccessorComponentTypeException(GLTFValidatorException):
+    pass
+
+class InvalidAcccessorSparseIndicesComponentTypeException(GLTFValidatorException):
+    pass
+
+
+class InvalidArrayLengthException(GLTFValidatorException):
+    pass
+
+
+class MismatchedArrayLengthException(GLTFValidatorException):
+    pass
+
+
+class InvalidMeshPrimitiveMode(GLTFValidatorException):
+    pass
+
+
+class InvalidValueError(GLTFValidatorException):
+    pass
+
+
+class InvalidBufferViewTarget(GLTFValidatorException):
+    pass
+
+
+def validator(gltf: GLTF2):
+    """
+    Validate a GLTF2 object. Will raises exceptions where validation fails.
+
+    Args:
+          gltf (GLTF2): A gltf2 object
+    """
+    warnings.warn("pygltf.utils.validator is a provisional function and may not exist in future versions.")
+    for accessor in gltf.accessors:
+        if accessor.componentType not in COMPONENT_TYPES:
+            raise InvalidAcccessorComponentTypeException(f"{accessor.componentType} not a valid component type")
+        if accessor.max and len(accessor.max) not in [1, 2, 3, 4, 9, 16]:
+            raise InvalidArrayLengthException(f"{len(accessor.max)} not a valid length for accessor max array")
+        if accessor.min and len(accessor.min) not in [1, 2, 3, 4, 9, 16]:
+            raise InvalidArrayLengthException(f"{len(accessor.min)} not a valid length for accessor min array")
+        if accessor.min and accessor.max and len(accessor.min) != len(accessor.max):
+            raise MismatchedArrayLengthException("accessor min and max arrays must be same lengths")
+        if accessor.sparse:
+            for sparse in accessor.sparse:
+                if sparse.indices:
+                    if sparse.indices.componentType not in ACCESSOR_SPARSE_INDICES_COMPONENT_TYPES:
+                        raise InvalidAcccessorSparseIndicesComponentTypeException(f"{sparse.indices.componentType} not a valid sparse indicies component type")
+    for mesh in gltf.meshes:
+        if mesh.primitives:
+            for primitive in mesh.primitives:
+                if primitive.mode not in MESH_PRIMITIVE_MODES:
+                    raise InvalidMeshPrimitiveMode(f"{primitive.mode} not a valid mesh primitive mode")
+
+    for bufferView in gltf.bufferViews:
+        if bufferView.byteOffset:
+            if bufferView.byteOffset < 0:
+                raise InvalidValueError(f"bufferView.byteOffset {bufferView.byteOffset} needs to be >= 0")
+        if bufferView.byteStride:
+            if bufferView.byteStride < 4:
+                raise InvalidValueError(f"bufferView.byteStride {bufferView.byteStride} needs to be >= 4")
+            if bufferView.byteStride > 252:
+                raise InvalidValueError(f"bufferView.byteStride {bufferView.byteStride} needs to be <= 252")
+            if bufferView.byteStride / 4 != bufferView.byteStride // 4:
+                raise InvalidValueError(f"bufferView.byteStride {bufferView.byteStride} needs to be a multiple of 4")
+        if bufferView.target and bufferView.target not in BUFFERVIEW_TARGETS:
+            raise InvalidBufferViewTarget(f"{bufferView.target} not a valid bufferView target type")
+    return True

@@ -1,2 +1,4 @@
 dataclasses>=0.1
 dataclasses-json>=0.0.25
+Deprecated
+pytest

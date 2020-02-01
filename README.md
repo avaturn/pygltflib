@@ -14,6 +14,7 @@ It supports the entire specification, including materials and animations. Main f
 pip install pygltflib
 ```
 
+
 ### How do I...
 
 
@@ -106,6 +107,15 @@ gltf.meshes[0].primitives[0].attributes._MYOTHERATTRIBUTE = 456
 ```
 
 
+#### Validate a gltf object?
+```python
+from pygltflib.utils import validator
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+validator(gltf)
+# Currently this experimental validator only validates a few rules about GLTF2 objects
+```
+
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
 
@@ -139,6 +149,21 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.0
+    * NOTE: There are a few small deprecations in this version to tighten up the library that will be removed in version 2.0.0
+    * deprecate class `SparseAccessor` in favour of `AccessorSparseIndices` and `AccessorSparseValues` (please update your code)
+    * deprecate class `MaterialTexture` in favour of `TextureInfo` to better match GLTF2 specification (please update your code)
+    * deprecate `AlphaMode` ENUM in favour of constants (eg replace `AlphaMode.OPAQUE` with `OPAQUE` (please update your code)
+    * fix support for `material.occlusionTextureInfo`  
+    * fix support for `material.normalTextureInfo`
+    * fix sampler support in `Animation` class by adding `AnimationSampler`
+    * add default values for Accessor, AnimationSampler, BufferView, Material, PbrMetallicRoughness, Primitive, Sampler
+    * add Optional to attributes for better type hinting
+    * add initial `utils.validator` to validate GLTF2 object accessor and bufferViews
+    
+* 1.12.0
+    * fix bug with binfile path handling
+    
 * 1.11.10
     * convert load methods from staticmethod to classmethods
 
@@ -393,7 +418,7 @@ For example, if you have a GLTF file that stores all the associated data in .bin
 but you want to create a single file, you need to convert the buffers from binary files
 to data uris or glb binary data.
 
-There is a convenience method named `conver_buffers` that can help.
+There is a convenience method named `convert_buffers` that can help.
 
 ```python3
 >>> from pygltflib import GLTF2, BufferFormat
@@ -422,6 +447,8 @@ In pygltflib, extensions are loaded as ordinary `dict` objects and so should be 
 For example `extensions["KHR_draco_mesh_compression"]["bufferView"]` instead of `extensions["KHR_draco_mesh_compression"].bufferView`.
 
 This allows future extensions to be automatically supported by pygltflib.
+
+*Extras* should work the same way.
 
 
 ## Running the tests
@@ -487,6 +514,24 @@ If available, The result of a visual inspection is in brackets next to the valid
 | VC | passes | *fails* | passes | passes
 | VertexColorTest | passes | passes | passes  | passes
 | WaterBottle | passes | passes | passes | passes
+
+
+### utils.validator status
+What does pygltflib.utils.validator test?
+NOTE: At the moment the validator raises an exception when an rule is broken. If you have ideas of the best way to 
+return information on validation warnings/errors please open a ticket on our gitlab.
+
+| Rule | validator tests | exception raised
+| ------| ------- | ----- 
+| accessor.componentType must be valid |  yes | InvalidAcccessorComponentTypeException
+| accessor min and max arrays must be valid length | yes | InvalidArrayLengthException
+| accessor min and max arrays must be same length | yes | MismatchedArrayLengthException
+| mesh.primitive.mode must be valid | yes | InvalidMeshPrimitiveMode 
+| accessor.sparse.indices.componentType must be valid |  yes | InvalidAcccessorSparseIndicesComponentTypeException
+| bufferView byteOffset and byteStrides must be valid | yes | InvalidValueError
+| bufferView targets must be valid | yes | InvalidBufferViewTarget
+| all other tests | no  
+
 
 
 ### unittests
