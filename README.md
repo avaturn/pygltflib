@@ -176,6 +176,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Arifullah Jan
 * Daniel Haehn
 * Jon Time
+* Laurie O
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
