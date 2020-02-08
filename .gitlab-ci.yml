@@ -14,4 +14,4 @@ flake8:
 pytest:
   stage: Test
   script:
-  - pytest tests.py
+  - pytest test_pygltflib.py
