@@ -38,7 +38,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
-import sys
 import warnings
 
 import mimetypes
@@ -104,7 +103,6 @@ ELEMENT_ARRAY_BUFFER = 34963  # eg index data
 
 BUFFERVIEW_TARGETS = [ARRAY_BUFFER, ELEMENT_ARRAY_BUFFER]
 
-
 TRANSLATION = "translation"
 ROTATION = "rotation"
 SCALE = "scale"
@@ -127,12 +125,10 @@ REPEAT = 10497
 
 WRAPPING_MODES = [CLAMP_TO_EDGE, MIRRORED_REPEAT, REPEAT]
 
-
 IMAGEJPEG = 'image/jpeg'
 IMAGEPNG = "image/png"
 
 IMAGE_MIMETYPES = [IMAGEJPEG, IMAGEPNG]
-
 
 NEAREST = 9728
 LINEAR = 9729
@@ -142,13 +138,13 @@ NEAREST_MIPMAP_LINEAR = 9986
 LINEAR_MIPMAP_LINEAR = 9987
 
 MAGNIFICATION_FILTERS = [NEAREST, LINEAR]
-MINIFICATION_FILTERS = [NEAREST, LINEAR, NEAREST_MIPMAP_NEAREST, LINEAR_MIPMAP_NEAREST, NEAREST_MIPMAP_LINEAR, LINEAR_MIPMAP_LINEAR]
+MINIFICATION_FILTERS = [NEAREST, LINEAR, NEAREST_MIPMAP_NEAREST, LINEAR_MIPMAP_NEAREST, NEAREST_MIPMAP_LINEAR,
+                        LINEAR_MIPMAP_LINEAR]
 
 PERSPECTIVE = "perspective"
 ORTHOGRAPHIC = "orthographic"
 
 CAMERA_TYPES = [PERSPECTIVE, ORTHOGRAPHIC]
-
 
 BLEND = "BLEND"
 MASK = "MASK"
@@ -505,7 +501,8 @@ class Node(Property):
     translation: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     scale: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0])
     children: Optional[List[int]] = field(default_factory=list)
-    matrix: Optional[List[float]] = field(default_factory=lambda: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],)
+    matrix: Optional[List[float]] = field(
+        default_factory=lambda: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0], )
     camera: Optional[int] = None
     name: Optional[str] = None
 
@@ -654,7 +651,7 @@ class GLTF2(Property):
         bufferView = self.bufferViews.pop(buffer_view_id)
         for objs in [self.accessors, self.images, [accessor.sparse for accessor in self.accessors]]:
             for obj in objs:
-                if obj.bufferView>=buffer_view_id:
+                if obj.bufferView >= buffer_view_id:
                     obj.bufferView -= 1
         return bufferView
 
