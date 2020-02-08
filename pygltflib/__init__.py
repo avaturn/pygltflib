@@ -720,7 +720,8 @@ class GLTF2(Property):
                     image_path = path / file_name
                     """
                     if mime.upper() != "PNG":
-                        warnings.warn(f"pygltflib currently only supports writing PNG textures, {mime} types may not work."
+                        warnings.warn(f"pygltflib currently only supports writing PNG textures, " 
+                                      "{mime} types may not work."
                                       "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     """
                     if image_path.is_file() and not override:
@@ -732,7 +733,7 @@ class GLTF2(Property):
                         image_file.write(data)
                         image.uri = file_name
 
-            elif image_format == ImageFormat.DATAURI:  # load the image data from files and store in the GLTF image objects
+            elif image_format == ImageFormat.DATAURI:  # load the image data from files and store in GLTF image objects
                 #  converting png/jpg etc to data uri
                 pass
 
