@@ -116,6 +116,38 @@ validator(gltf)
 # Currently this experimental validator only validates a few rules about GLTF2 objects
 ```
 
+#### Export texture images from a GLTF file to their own PNG files
+```python
+from pygltflib.utils import ImageFormat
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+gltf.convert_images(ImageFormat.FILE)
+gltf.images[0].uri  # will now be 0.png and the texture image will be saved in 0.png
+```
+
+#### Export texture images from a GLTF file to their own PNG files using custom file names
+```python
+from pygltflib.utils import ImageFormat
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+gltf.images[0].name = "cube.png"  # will save the data uri to this file (regardless of data format)
+gltf.convert_images(ImageFormat.FILE)
+gltf.images[0].uri  # will now be cube.png and the texture image will be saved in cube.png
+```
+
+#### Import PNG files as textures into a GLTF.
+```python
+from pygltflib.utils import ImageFormat, Image
+gltf = GLTF2()
+image = Image()
+image.uri = "myfile.png"
+gltf.images.append(image)
+gltf.convert_images(ImageFormat.DATAURI)
+gltf.images[0].uri  # will now be something like "data:image/png;base64,iVBORw0KGg..."
+gltf.images[0].name  # will be myfile.png
+```
+
+
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
 
@@ -149,6 +181,12 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.1
+    * add `GLTF.convert_image` method for converting texture image data from data uris to files and vice versa
+    * add 'name' attribute to `Image`
+    * add more unittests
+    * change `Primitive` so that `Attributes` is created on init 
+
 * 1.13.0
     * NOTE: There are a few small deprecations in this version to tighten up the library that will be removed in version 2.0.0
     * deprecate class `SparseAccessor` in favour of `AccessorSparseIndices` and `AccessorSparseValues` (please update your code)
@@ -435,6 +473,55 @@ Warning: Unable to save data uri to glb format.
 >>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
 ```
 
+#### Converting texture images
+The image data for textures in GLTF2 files can be stored in the image objects URI string
+or in an image file pointed to by the image objects' URI string or as part of the buffer.
+
+While saving and loading GLTF2 files is mostly handled transparently by the library,
+there may be some situations where you want a specific type of image storage.
+
+For example, if you have a GLB file that stores all its image files in .PNG files 
+but you want to create a single GLTF file, you need to convert the images from files
+to data uris.
+
+Currently converting images to and from the buffer is not supported. Only image
+files and data uris are supported.
+
+There is a convenience method named `convert_images` that can help.  
+
+```python3
+
+>>> # embed an image file to your GLTF.
+
+>>> from pygltflib.utils import ImageFormat, Image
+>>> gltf = GLTF2()
+>>> image = Image()
+>>> image.uri = "myfile.png"
+>>> gltf.images.append(image)
+
+>>> gltf.convert_images(ImageFormat.DATAURI)  # image file will be imported into the GLTF
+>>> gltf.images[0].uri  # will now be something like "data:image/png;base64,iVBORw0KGg..."
+>>> gltf.images[0].name  # will be myfile.png
+
+
+>>> # embed an image file to your GLTF.
+
+>>> from pathlib import Path
+>>> from pygltflib.utils import ImageFormat, Image
+>>> gltf = GLTF2()
+>>> image = Image()
+>>> image.uri = "data:image/png;base64,iVBORw0KGg..."
+>>> image.name = "myfile.png"  # optional file name, if not provided, the image files will be called "0.png", "1.png"
+>>> gltf.images.append(image)
+
+>>> gltf.convert_images(ImageFormat.FILE)  # image file will be imported into the GLTF
+>>> gltf.images[0].uri  # will be myfile.png
+"myfile.png"
+
+>>> Path("myfile.png").exists()
+True
+```
+
 
 #### Extensions
 The GLTF2 spec allows for extensions to added to any component of a GLTF file.
@@ -536,6 +623,6 @@ return information on validation warnings/errors please open a ticket on our git
 
 ### unittests
 ```
-pytest tests.py
+pytest test_pygltflib.py
 ```
 

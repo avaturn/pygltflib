@@ -4,13 +4,13 @@ link the glTF-Sample-Models into this directory eg:
 ln -s /home/user/projects/glTF-Sample-Models .
 
 To run:
-pytest tests.py
+pytest test_pygltflib.py
 
 To see with regular print statements:
-pytest -s tests.py
+pytest -s test_pygltflib.py
 
 A single test class:
-pytest tests.py::TextValidator
+pytest test_pygltflib.py::TextValidator
 
 
 """
@@ -26,17 +26,26 @@ import pytest
 
 import pygltflib
 from pygltflib import (
+    ARRAY_BUFFER,
+    ELEMENT_ARRAY_BUFFER,
+    FLOAT,
+    SCALAR,
     UNSIGNED_BYTE,
     UNSIGNED_INT,
     UNSIGNED_SHORT,
+    VEC2, VEC3, VEC4,
     Accessor,
     Asset,
     Attributes,
     Buffer,
     BufferFormat,
+    BufferView,
     GLTF2,
+    Image,
+    ImageFormat,
     Mesh,
     Material,
+    Node,
     PbrMetallicRoughness,
     Primitive,
     Property,
@@ -469,13 +478,14 @@ class TestDefaults:
         assert obj.mode == 4  # TRIANGLE
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.0",
+    "generator": "pygltflib@v1.13.1",
     "version": "2.0"
   },
   "meshes": [
     {
       "primitives": [
         {
+          "attributes": {},
           "mode": 4
         }
       ]
@@ -497,7 +507,7 @@ class TestDefaults:
     }
   ],
   "asset": {
-    "generator": "pygltflib@v1.13.0",
+    "generator": "pygltflib@v1.13.1",
     "version": "2.0"
   }
 }"""
@@ -512,7 +522,7 @@ class TestDefaults:
         assert obj.doubleSided is False
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.0",
+    "generator": "pygltflib@v1.13.1",
     "version": "2.0"
   },
   "materials": [
@@ -541,7 +551,7 @@ class TestDefaults:
 
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.0",
+    "generator": "pygltflib@v1.13.1",
     "version": "2.0"
   },
   "materials": [
@@ -571,6 +581,7 @@ class TestDefaults:
 
 class TestOurValidator:
     def test_accessor_componentType_validator(self):
+        # test pygltflib wont raise InvalidAcccessorComponentTypeException
         gltf = GLTF2()
         obj = Accessor()
         obj.componentType = UNSIGNED_BYTE
@@ -588,3 +599,155 @@ class TestOurValidator:
 
         with pytest.raises(InvalidAcccessorComponentTypeException):
             validator(gltf)
+
+
+class TestConvertImages:
+    def test_remove_bufferView(self):
+        gltf = GLTF2()
+        buffer = Buffer()
+        gltf.buffers.append(buffer)
+        bV1 = BufferView(buffer=0)
+        bV2 = BufferView(buffer=0)
+        bV3 = BufferView(buffer=0)
+
+        gltf.bufferViews.extend([bV1, bV2, bV3])
+
+
+    def test_from_datauri_to_file_with_name(self):
+        # test that converting a data uri image to a PNG file works
+        gltf = GLTF2()
+        image = Image()
+        image_data = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAGElEQVQIW2P4DwcMDAxAfBvMAhEQMYgcACEHG8ELxtbPAAAAAElFTkSuQmCC"
+        image.uri = f"data:image/png;base64,{image_data}"
+        image.name = "test.png"
+        gltf.images.append(image)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname) / "images.gltf"
+            gltf.save(t)
+            gltf = GLTF2().load(t)
+
+            assert gltf.images[0].uri.endswith("kSuQmCC") is True
+            gltf.convert_images(ImageFormat.FILE)
+
+            p = pathlib.Path(tmpdirname) / "test.png"
+
+            assert gltf.images[0].uri == p.name
+            assert p.exists()
+
+            # check that running twice doesn't munge data
+            gltf.convert_images(ImageFormat.FILE)
+            assert gltf.images[0].uri == p.name
+
+            p2 = pathlib.Path("/home/luke/Projects/pygltflib/test.png")
+            shutil.copy(p, p2)
+
+            with open(p, "rb") as image_file:
+                data = image_file.read()
+            assert data == base64.b64decode(image_data)
+
+    def test_from_datauri_to_file_without_name(self):
+        # test that converting a data uri image to a PNG file works
+        gltf = GLTF2()
+        image = Image()
+        image_data = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAGElEQVQIW2P4DwcMDAxAfBvMAhEQMYgcACEHG8ELxtbPAAAAAElFTkSuQmCC"
+        image.uri = f"data:image/png;base64,{image_data}"
+        gltf.images.append(image)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = pathlib.Path(tmpdirname) / "images.gltf"
+            gltf.save(t)
+            gltf = GLTF2().load(t)
+
+            assert gltf.images[0].uri.endswith("kSuQmCC") is True
+            gltf.convert_images(ImageFormat.FILE)
+
+            # verify auto generated name has worked
+            p = pathlib.Path(tmpdirname) / "0.png"
+            assert gltf.images[0].uri == p.name
+            assert p.exists()
+
+    def test_from_file_to_datauri(self):
+        # test that converting a PNG image to a data uri
+        gltf = GLTF2()
+        image = Image()
+        image_data = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAGElEQVQIW2P4DwcMDAxAfBvMAhEQMYgcACEHG8ELxtbPAAAAAElFTkSuQmCC"
+        image_uri = f"data:image/png;base64,{image_data}"
+        image.uri = "test.png"
+        gltf.images.append(image)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            png_path = pathlib.Path(tmpdirname) / "test.png"
+
+            # setup PNG file
+            with open(png_path, "wb") as image_file:
+                data = base64.b64decode(image_data)
+                image_file.write(data)
+
+            gltf.convert_images(ImageFormat.DATAURI)
+
+            assert gltf.images[0].uri == image_uri
+
+
+class TestExamples:
+    def test_a_simple_mesh(self):
+        # create gltf objects for a scene with a primitive triangle with indexed geometry
+        gltf = GLTF2()
+        scene = Scene()
+        mesh = Mesh()
+        primitive = Primitive()
+        node = Node()
+        buffer = Buffer()
+        bufferView1 = BufferView()
+        bufferView2 = BufferView()
+        accessor1 = Accessor()
+        accessor2 = Accessor()
+
+        # add data
+        buffer.uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+        buffer.byteLength = 44
+
+        bufferView1.buffer = 0
+        bufferView1.byteOffset = 0
+        bufferView1.byteLength = 6
+        bufferView1.target = ELEMENT_ARRAY_BUFFER
+
+        bufferView2.buffer = 0
+        bufferView2.byteOffset = 8
+        bufferView2.byteLength = 36
+        bufferView2.target = ARRAY_BUFFER
+
+        accessor1.bufferView = 0
+        accessor1.byteOffset = 0
+        accessor1.componentType = UNSIGNED_SHORT
+        accessor1.count = 3
+        accessor1.type = SCALAR
+        accessor1.max = [2]
+        accessor1.min = [0]
+
+        accessor2.bufferView = 1
+        accessor2.byteOffset = 0
+        accessor2.componentType = FLOAT
+        accessor2.count = 3
+        accessor2.type = VEC3
+        accessor2.max = [1.0, 1.0, 0.0]
+        accessor2.min = [0.0, 0.0, 0.0]
+
+        primitive.attributes.POSITION = 1
+        node.mesh = 0
+        scene.nodes = [0]
+
+        # assemble into a gltf structure
+        gltf.scenes.append(scene)
+        gltf.meshes.append(mesh)
+        gltf.meshes[0].primitives.append(primitive)
+        gltf.nodes.append(node)
+        gltf.buffers.append(buffer)
+        gltf.bufferViews.append(bufferView1)
+        gltf.bufferViews.append(bufferView2)
+        gltf.accessors.append(accessor1)
+        gltf.accessors.append(accessor2)
+
+        # save to file
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            gltf.save("triangle.gltf")
