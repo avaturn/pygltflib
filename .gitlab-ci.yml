@@ -17,4 +17,6 @@ flake8:
 pytest:
   stage: Test
   script:
+  - apk add git
+  - git clone https://github.com/KhronosGroup/glTF-Sample-Models.git
   - pytest test_pygltflib.py

@@ -28,6 +28,7 @@ setuptools.setup(
     install_requires=[
         "dataclasses;python_version>='3.6'",
         "dataclasses-json>=0.0.25",
+        "deprecated"
     ],
     python_requires=">=3.6",
     classifiers=[

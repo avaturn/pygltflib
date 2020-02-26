@@ -478,7 +478,7 @@ class TestDefaults:
         assert obj.mode == 4  # TRIANGLE
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.1",
+    "generator": "pygltflib@v1.13.2",
     "version": "2.0"
   },
   "meshes": [
@@ -507,7 +507,7 @@ class TestDefaults:
     }
   ],
   "asset": {
-    "generator": "pygltflib@v1.13.1",
+    "generator": "pygltflib@v1.13.2",
     "version": "2.0"
   }
 }"""
@@ -522,7 +522,7 @@ class TestDefaults:
         assert obj.doubleSided is False
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.1",
+    "generator": "pygltflib@v1.13.2",
     "version": "2.0"
   },
   "materials": [
@@ -551,7 +551,7 @@ class TestDefaults:
 
         assert gltf.gltf_to_json() == """{
   "asset": {
-    "generator": "pygltflib@v1.13.1",
+    "generator": "pygltflib@v1.13.2",
     "version": "2.0"
   },
   "materials": [

@@ -182,6 +182,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.2 
+    * add deprecated to pip setup
+
 * 1.13.1
     * add `GLTF.convert_image` method for converting texture image data from data uris to files and vice versa
     * add 'name' attribute to `Image`
