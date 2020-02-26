@@ -108,7 +108,8 @@ gltf.meshes[0].primitives[0].attributes._MYOTHERATTRIBUTE = 456
 
 
 #### Validate a gltf object?
-```python
+```python3
+from pygltflib import GLTF2
 from pygltflib.utils import validator
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
@@ -117,7 +118,8 @@ validator(gltf)
 ```
 
 #### Export texture images from a GLTF file to their own PNG files
-```python
+```python3
+from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
@@ -126,7 +128,8 @@ gltf.images[0].uri  # will now be 0.png and the texture image will be saved in 0
 ```
 
 #### Export texture images from a GLTF file to their own PNG files using custom file names
-```python
+```python3
+from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
@@ -136,7 +139,8 @@ gltf.images[0].uri  # will now be cube.png and the texture image will be saved i
 ```
 
 #### Import PNG files as textures into a GLTF.
-```python
+```python3
+from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat, Image
 gltf = GLTF2()
 image = Image()
