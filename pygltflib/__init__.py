@@ -41,15 +41,11 @@ import struct
 import warnings
 
 import mimetypes
-from dataclasses_json import dataclass_json as _dataclass_json
+from dataclasses_json import dataclass_json as dataclass_json
 from dataclasses_json.core import _decode_dataclass
+from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 
-try:
-    from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
-except ImportError:  # backwards compat with dataclasses_json 0.0.25 and less
-    from dataclasses_json.core import _CollectionEncoder as JsonEncoder
-
-__version__ = "1.13.2"
+__version__ = "1.13.3"
 
 """
 About the GLTF2 file format:
@@ -63,10 +59,10 @@ Positive rotation is counterclockwise.
 
 A = TypeVar('A')
 
-LINEAR = "LINEAR"
-STEP = "STEP"
-CALMULLROMSPLINE = "CALMULLROMSPLINE"
-CUBICSPLINE = "CUBICSPLINE"
+ANIM_LINEAR = "LINEAR"
+ANIM_STEP = "STEP"
+ANIM_CALMULLROMSPLINE = "CALMULLROMSPLINE"
+ANIM_CUBICSPLINE = "CUBICSPLINE"
 
 SCALAR = "SCALAR"
 VEC2 = "VEC2"
@@ -215,18 +211,6 @@ def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-def dataclass_json(cls, *args, **kwargs):
-    try:
-        dclass = _dataclass_json(cls, *args, **kwargs)  # hopefully a future version of dataclass-json > 0.2.8
-    except TypeError:  # dataclass-json < 0.2.8
-        try:
-            dclass = _dataclass_json(cls)
-        except TypeError:  # dataclass-json == 0.2.8
-            warnings.warn("Please upgrade your version of dataclasses-json.")
-            dclass = _dataclass_json(cls, decode_letter_case=LetterCase.CAMEL, encode_letter_case=LetterCase.CAMEL)
-    return dclass
 
 
 def gltf_asdict(obj, *, dict_factory=dict):
@@ -551,7 +535,7 @@ class AnimationChannelTarget(Property):
 @dataclass
 class AnimationSampler(Property):
     input: int = None  # required
-    interpolation: Optional[str] = LINEAR
+    interpolation: Optional[str] = ANIM_LINEAR
     output: int = None  # required
 
 
@@ -589,6 +573,8 @@ class GLTF2(Property):
     scenes: List[Scene] = field(default_factory=list)
     skins: List[Skin] = field(default_factory=list)
     textures: List[Texture] = field(default_factory=list)
+#    _glb_data: Any = None
+#    _path: Any = None
 
     def binary_blob(self):
         """ Get the binary blob associated with glb files if available
@@ -655,6 +641,52 @@ class GLTF2(Property):
                     obj.bufferView -= 1
         return bufferView
 
+    def export_image_to_file(self, image_index, override=False):
+        image = self.images[image_index]
+        path: Path = getattr(self, "_path", Path())
+        if image.uri and not image.uri.startswith('data:'):
+            # already in file format
+            if not (path / image.uri).exists():
+                warnings.warn(f"Image {image_index} is already stored in a file {path / image.uri} but file"
+                              f"does not appear to exist.")
+            return None
+        elif image.bufferView:
+            # TODO: remove bufferView from GLTF when create images or datauris from buffer data
+            bufferView = self.bufferViews[image.bufferView]
+            buffer = self.buffers[bufferView.buffer]
+            if buffer.uri:  # buffer is stored as a data uri or an uri pointing to a non-existent file
+                warnings.warn("pygltflib currently unable to convert image stored buffers to image file."
+                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+            else:  # buffer is stored in the binary blob
+                warnings.warn(
+                    "pygltflib currently does not remove image data from the buffer when converting to files."
+                    "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                data = self.binary_blob()
+                extension = mimetypes.guess_extension(image.mimeType)
+                file_name = f"{image_index}{extension}"
+                with open(file_name, "wb") as f:
+                    f.write(data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength])
+                return file_name
+            return None
+        elif image.uri.startswith('data:'):
+            #  convert data uri to image file
+            header, encoded = image.uri.split(",", 1)
+            mime = header.split(":")[1].split(";")[0]
+            if image.name:  # use image.name
+                file_name = image.name
+            else:
+                extension = mimetypes.guess_extension(mime)
+                file_name = f"{image_index}{extension}"
+            image_path = path / file_name
+            if image_path.is_file() and not override:
+                warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
+                return None
+            data = base64.b64decode(encoded)
+
+            with open(image_path, "wb") as image_file:
+                image_file.write(data)
+            return file_name
+
     def convert_images(self, image_format, override=False):
         """
         GLTF files can store the image data in three different formats: In the buffers, as a data
@@ -665,33 +697,37 @@ class GLTF2(Property):
 
         """
         path: Path = getattr(self, "_path", Path())
-        for i, image in enumerate(self.images):
-            if image.uri and image_format == ImageFormat.DATAURI:
+        for image_index, image in enumerate(self.images):
+            if image_format == ImageFormat.DATAURI:  # convert to data uri
                 # load an image file or pull from the buffer
-                if image.uri.startswith('data:'):
-                    # already in data uri format
-                    continue
+                if image.uri:  # either already in a datauri format, or in a file
+                    if not image.uri.startswith('data:'):  # not in data format, so assume a file name
+                        # data is stored in a file, so load into data uri
+                        image_path = path / image.uri
+                        if not image_path.exists():
+                            warnings.warn(f"Expected image file at {image_path} not found.")
+                            continue
+                        mime: str
+                        mime, _ = mimetypes.guess_type(image_path)
+
+                        with open(image_path, "rb") as image_file:
+                            encoded_string = str(base64.b64encode(image_file.read()).decode('utf-8'))
+                            image.name = copy.copy(image.uri) if not image.name else image.name
+                            image.uri = f'data:{mime};base64,{encoded_string}'
                 elif image.bufferView:
-                    # TODO: convert from buffer to data uri, and remove bufferView from GLTF
-                    warnings.warn("pygltflib currently unable to convert image stored buffers to data uris."
+                    # TODO: remove bufferView from GLTF when create images or datauris from buffer data
+                    warnings.warn("pygltflib currently does not remove image data from the buffer when converting to data uri."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                    continue
+                    data = self.binary_blob()
+                    bufferView = self.bufferViews[image.bufferView]
+                    buffer = self.buffers[bufferView.buffer]
+                    image_data = data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength]
+                    encoded_string = str(base64.b64encode(image_data).decode('utf-8'))
+                    image.uri = f'data:{image.mimeType};base64,{encoded_string}'
                 else:
-                    # data is stored in a file, so load into data uri
-                    image_path = path / image.uri
-                    if not image_path.exists():
-                        warnings.warn(f"Expected image file at {image_path} not found.")
-                        continue
+                    warnings.warn(f"Image {image_index} appears to have neither a uri nor a buffer view.")
 
-                    mime: str
-                    mime, _ = mimetypes.guess_type(image_path)
-
-                    with open(image_path, "rb") as image_file:
-                        encoded_string = str(base64.b64encode(image_file.read()).decode('utf-8'))
-                        image.name = copy.copy(image.uri) if not image.name else image.name
-                        image.uri = f'data:{mime};base64,{encoded_string}'
-
-            elif image_format == ImageFormat.BUFFERVIEW:
+            elif image_format == ImageFormat.BUFFERVIEW:  # convert to buffer
                 #  load image data into the buffer and and add a bufferView
                 if image.bufferView:
                     # already in bufferview format
@@ -699,43 +735,11 @@ class GLTF2(Property):
                 warnings.warn("pygltflib currently unable to add image data to buffers."
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 continue
-            elif image_format == ImageFormat.FILE:
-                if image.uri and not image.uri.startswith('data:') and (path / image.uri).exists():
-                    # already in file format
-                    continue
-                elif image.bufferView:
-                    # TODO: convert from buffer to image file, and remove bufferView from GLTF
-                    warnings.warn("pygltflib currently unable to convert image stored buffers to image file."
-                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                    continue
-                elif image.uri.startswith('data:'):
-                    #  convert data uri to image file
-                    header, encoded = image.uri.split(",", 1)
-                    mime = header.split(":")[1].split(";")[0]
-                    if image.name:  # use image.name
-                        file_name = image.name
-                    else:
-                        mime = mime.split("/")[1]
-                        file_name = f"{i}.{mime}"
-                    image_path = path / file_name
-                    """
-                    if mime.upper() != "PNG":
-                        warnings.warn(f"pygltflib currently only supports writing PNG textures, "
-                                      "{mime} types may not work."
-                                      "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                    """
-                    if image_path.is_file() and not override:
-                        warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
-                        continue
-                    data = base64.b64decode(encoded)
+            elif image_format == ImageFormat.FILE:   # convert to images
+                file_name = self.export_image_to_file(image_index, override)
+                if file_name: # replace data uri with pointer to file
+                    image.uri = file_name
 
-                    with open(image_path, "wb") as image_file:
-                        image_file.write(data)
-                        image.uri = file_name
-
-            elif image_format == ImageFormat.DATAURI:  # load the image data from files and store in GLTF image objects
-                #  converting png/jpg etc to data uri
-                pass
 
     def convert_buffers(self, buffer_format, override=False):
         """
@@ -745,6 +749,8 @@ class GLTF2(Property):
         buffer_format (BufferFormat.ENUM)
         override (bool): Override a bin file if it already exists and is about to be replaced
         """
+        path: Path = getattr(self, "_path", Path())
+
         for i, buffer in enumerate(self.buffers):
             current_buffer_format = self.identify_uri(buffer.uri)
             if current_buffer_format == buffer_format:  # already in the format
@@ -775,13 +781,13 @@ class GLTF2(Property):
                 buffer.uri = f'{DATA_URI_HEADER}{data}'
             elif buffer_format == BufferFormat.BINFILE:
                 filename = Path(f"{i}").with_suffix(".bin")
-                binfile_path = getattr(self, "_path", Path()) / filename
-                buffer.uri = str(filename)
+                binfile_path = path / filename
                 if binfile_path.is_file() and not override:
                     warnings.warn(f"Unable to write buffer file, a file already exists at {binfile_path}")
                     continue
                 with open(binfile_path, "wb") as f:  # save bin file with the gltf file
                     f.write(data)
+                buffer.uri = str(filename)
 
     def to_json(self,
                 *,

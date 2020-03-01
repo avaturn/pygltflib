@@ -181,16 +181,25 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Daniel Haehn
 * Jon Time
 * Laurie O
+* Peter Suter
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.3
+    * add support to `GLTF.convert_images` to convert from buffers to image files. NOTE: Does not update buffer yet.
+    * add support to `GLTF.convert_images` to convert from buffers to data uris. NOTE: Does not update buffer yet.
+    * fix test suite to write tmp files to tmp directory instead of install directory
+    * remove support for old versions of dataclasses-json
+    * renamed CUBICSPLINE, LINEAR and STEP to ANIM_LINEAR, ANIM_STEP, ANIM_CUBICSPLINE to fix clash with webGL constants 
+    * change bin file conversion to only lose binary blob on successful file export
+
 * 1.13.2 
     * add deprecated to pip setup
 
 * 1.13.1
-    * add `GLTF.convert_image` method for converting texture image data from data uris to files and vice versa
+    * add `GLTF.convert_images` method for converting texture image data from data uris to files and vice versa
     * add 'name' attribute to `Image`
     * add more unittests
     * change `Primitive` so that `Attributes` is created on init 
@@ -631,6 +640,7 @@ return information on validation warnings/errors please open a ticket on our git
 
 ### unittests
 ```
+git clone https://github.com/KhronosGroup/glTF-Sample-Models
 pytest test_pygltflib.py
 ```
 

@@ -253,26 +253,27 @@ class TestBufferConversions:
         gltf = GLTF2()
         gltf.buffers.append(buffer)
 
-        print("data1")
-        assert gltf.buffers[0].uri == data
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            gltf._path = tmpdirname
+            assert gltf.buffers[0].uri == data
 
-        gltf.convert_buffers(BufferFormat.BINARYBLOB)
+            gltf.convert_buffers(BufferFormat.BINARYBLOB)
 
-        assert gltf.buffers[0].uri == ""
-        assert len(gltf.binary_blob()) > 0
-        print("binary blob success", gltf.binary_blob())
+            assert gltf.buffers[0].uri == ""
+            assert len(gltf.binary_blob()) > 0
+            print("binary blob success", gltf.binary_blob())
 
-        gltf.convert_buffers(BufferFormat.BINFILE)
+            gltf.convert_buffers(BufferFormat.BINFILE)
 
-        assert gltf.buffers[0].uri == "0.bin"
-        assert not gltf.binary_blob()
+            assert gltf.buffers[0].uri == "0.bin"
+            assert not gltf.binary_blob()
 
-        print("binary bin file success")
+            print("binary bin file success")
 
-        gltf.convert_buffers(BufferFormat.DATAURI)
-        print("final test")
+            gltf.convert_buffers(BufferFormat.DATAURI)
+            print("final test")
 
-        assert gltf.buffers[0].uri == data
+            assert gltf.buffers[0].uri == data
 
     def test_buffer_conversions_realworld(self):
         fembedded = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
@@ -578,7 +579,6 @@ class TestDefaults:
 }"""
 
 
-
 class TestOurValidator:
     def test_accessor_componentType_validator(self):
         # test pygltflib wont raise InvalidAcccessorComponentTypeException
@@ -688,6 +688,24 @@ class TestConvertImages:
 
             assert gltf.images[0].uri == image_uri
 
+    def test_from_binaryblob_to_file(self):
+        # test that converting a PNG image stored in binary blob to a file
+        filename = "glTF-Sample-Models/2.0/BoxTextured/glTF-Binary/BoxTextured.glb"
+        gltf = GLTF2().load(filename)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            gltf._path = tmpdirname
+            gltf.convert_images(ImageFormat.FILE)
+            assert gltf.images[0].uri == "0.png"  # will now be 0.png and the texture image will be saved in 0.png
+
+    def test_from_binaryblob_to_datauri(self):
+        # test that converting a PNG image stored in binary blob to a data uri
+        filename = "glTF-Sample-Models/2.0/BoxTextured/glTF-Binary/BoxTextured.glb"
+        gltf = GLTF2().load(filename)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            gltf._path = tmpdirname
+            gltf.convert_images(ImageFormat.DATAURI)
+            assert gltf.images[0].uri.startswith("data:image/png;base64")  # will now be populated
+
 
 class TestExamples:
     def test_a_simple_mesh(self):
@@ -751,3 +769,4 @@ class TestExamples:
         # save to file
         with tempfile.TemporaryDirectory() as tmpdirname:
             gltf.save("triangle.gltf")
+

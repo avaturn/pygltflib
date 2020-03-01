@@ -1,4 +1,4 @@
 dataclasses>=0.1
-dataclasses-json>=0.0.25
+dataclasses-json>=0.2.9
 deprecated
 pytest
