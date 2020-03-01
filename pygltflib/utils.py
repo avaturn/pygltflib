@@ -384,6 +384,11 @@ class GLTFValidatorException(Exception):
 class InvalidAcccessorComponentTypeException(GLTFValidatorException):
     pass
 
+
+class InvalidBufferViewIndex(GLTFValidatorException):
+    pass
+
+
 class InvalidAcccessorSparseIndicesComponentTypeException(GLTFValidatorException):
     pass
 
@@ -408,14 +413,7 @@ class InvalidBufferViewTarget(GLTFValidatorException):
     pass
 
 
-def validator(gltf: GLTF2):
-    """
-    Validate a GLTF2 object. Will raises exceptions where validation fails.
-
-    Args:
-          gltf (GLTF2): A gltf2 object
-    """
-    warnings.warn("pygltf.utils.validator is a provisional function and may not exist in future versions.")
+def validate_accessors(gltf: GLTF2):
     for accessor in gltf.accessors:
         if accessor.componentType not in COMPONENT_TYPES:
             raise InvalidAcccessorComponentTypeException(f"{accessor.componentType} not a valid component type")
@@ -425,17 +423,31 @@ def validator(gltf: GLTF2):
             raise InvalidArrayLengthException(f"{len(accessor.min)} not a valid length for accessor min array")
         if accessor.min and accessor.max and len(accessor.min) != len(accessor.max):
             raise MismatchedArrayLengthException("accessor min and max arrays must be same lengths")
-        if accessor.sparse:
-            for sparse in accessor.sparse:
-                if sparse.indices:
-                    if sparse.indices.componentType not in ACCESSOR_SPARSE_INDICES_COMPONENT_TYPES:
-                        raise InvalidAcccessorSparseIndicesComponentTypeException(f"{sparse.indices.componentType} not a valid sparse indicies component type")
+
+
+def validate_accessors_sparse(gltf: GLTF2):
+    for accessor in gltf.accessors:
+        sparse = accessor.sparse
+        if sparse and sparse.indices:
+            if sparse.indices.componentType not in ACCESSOR_SPARSE_INDICES_COMPONENT_TYPES:
+                raise InvalidAcccessorSparseIndicesComponentTypeException(
+                    f"{sparse.indices.componentType} not a valid sparse indicies component type")
+            bufferView = sparse.indices.bufferView
+            if bufferView > len(gltf.bufferViews):
+                raise InvalidBufferViewIndex("accessor.sparse.indices.bufferView refers to non-existent bufferView")
+            if gltf.bufferViews[bufferView].target in BUFFERVIEW_TARGETS:
+                raise InvalidBufferViewTarget("accessor.sparse.indices' referenced bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target")
+
+
+def validate_meshes(gltf: GLTF2):
     for mesh in gltf.meshes:
         if mesh.primitives:
             for primitive in mesh.primitives:
                 if primitive.mode not in MESH_PRIMITIVE_MODES:
                     raise InvalidMeshPrimitiveMode(f"{primitive.mode} not a valid mesh primitive mode")
 
+
+def validate_bufferViews(gltf: GLTF2):
     for bufferView in gltf.bufferViews:
         if bufferView.byteOffset:
             if bufferView.byteOffset < 0:
@@ -449,4 +461,19 @@ def validator(gltf: GLTF2):
                 raise InvalidValueError(f"bufferView.byteStride {bufferView.byteStride} needs to be a multiple of 4")
         if bufferView.target and bufferView.target not in BUFFERVIEW_TARGETS:
             raise InvalidBufferViewTarget(f"{bufferView.target} not a valid bufferView target type")
+
+
+def validator(gltf: GLTF2):
+    """
+    Validate a GLTF2 object. Will raises exceptions where validation fails.
+
+    Args:
+          gltf (GLTF2): A gltf2 object
+    """
+    warnings.warn("pygltf.utils.validator is a provisional function and may not exist in future versions.")
+    validate_accessors(gltf)
+    validate_accessors_sparse(gltf)
+    validate_meshes(gltf)
+    validate_bufferViews(gltf)
+
     return True

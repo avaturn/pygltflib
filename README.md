@@ -190,6 +190,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * 1.13.3
     * add support to `GLTF.convert_images` to convert from buffers to image files. NOTE: Does not update buffer yet.
     * add support to `GLTF.convert_images` to convert from buffers to data uris. NOTE: Does not update buffer yet.
+    * add accessor sparse indices bufferview check to validator 
     * fix test suite to write tmp files to tmp directory instead of install directory
     * remove support for old versions of dataclasses-json
     * renamed CUBICSPLINE, LINEAR and STEP to ANIM_LINEAR, ANIM_STEP, ANIM_CUBICSPLINE to fix clash with webGL constants 
