@@ -413,7 +413,12 @@ class InvalidBufferViewTarget(GLTFValidatorException):
     pass
 
 
+class MissingRequiredField(GLTFValidatorException):
+    pass
+
+
 def validate_accessors(gltf: GLTF2):
+    # pretty complete
     for accessor in gltf.accessors:
         if accessor.componentType not in COMPONENT_TYPES:
             raise InvalidAcccessorComponentTypeException(f"{accessor.componentType} not a valid component type")
@@ -437,6 +442,15 @@ def validate_accessors_sparse(gltf: GLTF2):
                 raise InvalidBufferViewIndex("accessor.sparse.indices.bufferView refers to non-existent bufferView")
             if gltf.bufferViews[bufferView].target in BUFFERVIEW_TARGETS:
                 raise InvalidBufferViewTarget("accessor.sparse.indices' referenced bufferView can't have ARRAY_BUFFER or ELEMENT_ARRAY_BUFFER target")
+
+
+def validate_animation_channel(gltf: GLTF2):
+    for animation in gltf.animations:
+        for channel in animation.channels:
+            if not channel.sampler:
+                raise MissingRequiredField("animation.channel requires sampler")
+            if not channel.target:
+                raise MissingRequiredField("animation.channel requires sampler")
 
 
 def validate_meshes(gltf: GLTF2):
@@ -473,6 +487,7 @@ def validator(gltf: GLTF2):
     warnings.warn("pygltf.utils.validator is a provisional function and may not exist in future versions.")
     validate_accessors(gltf)
     validate_accessors_sparse(gltf)
+    validate_animation_channel(gltf)
     validate_meshes(gltf)
     validate_bufferViews(gltf)
 

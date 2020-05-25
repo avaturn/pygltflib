@@ -755,7 +755,6 @@ class GLTF2(Property):
                 if file_name: # replace data uri with pointer to file
                     image.uri = file_name
 
-
     def convert_buffers(self, buffer_format, override=False):
         """
         GLTF files can store the buffer data in three different formats: As a binary blob ready for glb, as a data

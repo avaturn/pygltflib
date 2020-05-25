@@ -204,14 +204,14 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 
 #### Changelog
 * 1.13.4
-    * update `metallicRoughnessTexture` to use `TextureInfo`
-    * update requirements to not install dataclasses in python 3.7 and above
-    * improve `remove_bufferView` to warn if leaving dangling references to removed bufferView
-    * fix `remove_bufferView` when sparse accessor is None
-    * fix spelling of `InvalidAccessorSparseIndicesComponentTypeException`
+    * add warning to `remove_bufferView` if leaving dangling references to removed bufferView
     * add tests for `remove_bufferView`
     * add node access and remove_bufferView examples to README
-    
+    * add validation for animation channels
+    * change `metallicRoughnessTexture` to use `TextureInfo`
+    * change requirements to not install dataclasses in python 3.7 and above
+    * fix `remove_bufferView` when sparse accessor is None
+    * fix spelling of `InvalidAccessorSparseIndicesComponentTypeException`
 
 * 1.13.3
     * add support to `GLTF.convert_images` to convert from buffers to image files. NOTE: Does not update buffer yet.

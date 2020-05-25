@@ -355,7 +355,7 @@ class TestExtensions:
             }
         }
 
-        gltf = gltf.gltf_from_json(gltf.gltf_to_json())
+        gltf = gltf.gltf_from_json(gltf_to_json(gltf))
 
         assert gltf.extensionsUsed == extensionsUsed
         assert gltf.extensionsRequired == extensionsRequired
@@ -399,7 +399,7 @@ class TestAttributes:
 
     def test_attribute_inside_gltf(self):
         gltf = self.basic_gltf()
-        data = gltf.gltf_to_json()
+        data = gltf_to_json(gltf)
         assert '"attributes": {\n            "_MYCUSTOMATTRIBUTE": 123\n          }' in data
 
     def test_attribute_save(self):
@@ -455,12 +455,17 @@ class TestAccessors:
         obj = Accessor()
         obj.componentType = UNSIGNED_INT
         gltf.accessors.append(obj)
-        assert '"componentType": 5125' in gltf.gltf_to_json()
+        assert '"componentType": 5125' in gltf_to_json(gltf)
 
 
 class TestTextureConvert:
     def test_(self):
         pass
+
+
+def gltf_to_json(gltf: GLTF2):
+    gltf.asset.generator = 'test'
+    return gltf.gltf_to_json()
 
 
 class TestDefaults:
@@ -478,9 +483,9 @@ class TestDefaults:
         mesh.primitives.append(obj)
         gltf.meshes.append(mesh)
         assert obj.mode == 4  # TRIANGLE
-        assert gltf.gltf_to_json() == """{
+        assert gltf_to_json(gltf) == """{
   "asset": {
-    "generator": "pygltflib@v1.13.3",
+    "generator": "test",
     "version": "2.0"
   },
   "meshes": [
@@ -501,7 +506,7 @@ class TestDefaults:
         gltf.accessors.append(obj)
         assert obj.byteOffset == 0
         assert obj.normalized is False
-        assert gltf.gltf_to_json() == """{
+        assert gltf_to_json(gltf) == """{
   "accessors": [
     {
       "byteOffset": 0,
@@ -509,7 +514,7 @@ class TestDefaults:
     }
   ],
   "asset": {
-    "generator": "pygltflib@v1.13.3",
+    "generator": "test",
     "version": "2.0"
   }
 }"""
@@ -522,9 +527,9 @@ class TestDefaults:
         assert obj.alphaCutoff == 0.5
         assert obj.alphaMode == "OPAQUE"
         assert obj.doubleSided is False
-        assert gltf.gltf_to_json() == """{
+        assert gltf_to_json(gltf) == """{
   "asset": {
-    "generator": "pygltflib@v1.13.3",
+    "generator": "test",
     "version": "2.0"
   },
   "materials": [
@@ -546,14 +551,14 @@ class TestDefaults:
         obj = Material()
         obj.pbrMetallicRoughness = pbr = PbrMetallicRoughness()
         gltf.materials.append(obj)
-        a = gltf.gltf_to_json()
+        a = gltf_to_json(gltf)
         assert pbr.baseColorFactor == [1.0, 1.0, 1.0]
         assert pbr.metallicFactor == 1.0
         assert pbr.roughnessFactor == 1.0
 
-        assert gltf.gltf_to_json() == """{
+        assert gltf_to_json(gltf) == """{
   "asset": {
-    "generator": "pygltflib@v1.13.3",
+    "generator": "test",
     "version": "2.0"
   },
   "materials": [
