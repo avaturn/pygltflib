@@ -389,7 +389,7 @@ class InvalidBufferViewIndex(GLTFValidatorException):
     pass
 
 
-class InvalidAcccessorSparseIndicesComponentTypeException(GLTFValidatorException):
+class InvalidAccessorSparseIndicesComponentTypeException(GLTFValidatorException):
     pass
 
 
@@ -430,7 +430,7 @@ def validate_accessors_sparse(gltf: GLTF2):
         sparse = accessor.sparse
         if sparse and sparse.indices:
             if sparse.indices.componentType not in ACCESSOR_SPARSE_INDICES_COMPONENT_TYPES:
-                raise InvalidAcccessorSparseIndicesComponentTypeException(
+                raise InvalidAccessorSparseIndicesComponentTypeException(
                     f"{sparse.indices.componentType} not a valid sparse indicies component type")
             bufferView = sparse.indices.bufferView
             if bufferView > len(gltf.bufferViews):

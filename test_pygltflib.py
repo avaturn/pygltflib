@@ -35,6 +35,7 @@ from pygltflib import (
     UNSIGNED_SHORT,
     VEC2, VEC3, VEC4,
     Accessor,
+    AccessorSparseIndices,
     Asset,
     Attributes,
     Buffer,
@@ -601,18 +602,71 @@ class TestOurValidator:
             validator(gltf)
 
 
-class TestConvertImages:
-    def test_remove_bufferView(self):
-        gltf = GLTF2()
+class TestBufferViews:
+    def setup_method(self):
+        # set up a gltf to test bufferViews
+        self.gltf = GLTF2()
         buffer = Buffer()
-        gltf.buffers.append(buffer)
-        bV1 = BufferView(buffer=0)
-        bV2 = BufferView(buffer=0)
-        bV3 = BufferView(buffer=0)
+        self.gltf.buffers.append(buffer)
+        self.bV1 = BufferView(buffer=0)
+        self.bV2 = BufferView(buffer=0)
+        self.bV3 = BufferView(buffer=0)
+        self.gltf.bufferViews.extend([self.bV1, self.bV2, self.bV3])
 
-        gltf.bufferViews.extend([bV1, bV2, bV3])
+        accessor1 = Accessor()
+        accessor1.bufferView = 0
+
+        accessor2 = Accessor()
+        accessor2.bufferView = 1
+
+        accessor3 = Accessor()
+        accessor3.bufferView = 2
+        self.gltf.accessors.extend([accessor1, accessor2, accessor3])
+
+        image1 = Image()
+        image1.bufferView = 0
+        image2 = Image()
+        image2.bufferView = 1
+        image3 = Image()
+        image3.bufferView = 2
+
+        self.gltf.images.extend([image3, image2, image1])  # backwards for variety
+
+    def test_remove_bufferView(self):
+        self.gltf.remove_bufferView(1)
+        assert self.gltf.bufferViews == [self.bV1, self.bV3]
+
+    def test_accessors(self):
+        # make sure accessors using buffer views update OK too, (bufferViews >= 1 should decrement
+        self.gltf.remove_bufferView(1)
+        assert self.gltf.accessors[0].bufferView == 0
+        assert self.gltf.accessors[1].bufferView == 0  # this should prompt a warning
+        assert self.gltf.accessors[2].bufferView == 1
+
+    def test_images(self):
+        # make sure images using buffer views update OK too, (bufferViews >= 1 should decrement
+        self.gltf.remove_bufferView(1)
+        assert self.gltf.images[0].bufferView == 1
+        assert self.gltf.images[1].bufferView == 0  # this should prompt a warning
+        assert self.gltf.images[2].bufferView == 0
+
+    def test_sparse(self):
+        sparse1 = Sparse()
+        sparse1.indices = AccessorSparseIndices()
+        sparse1.indices.bufferView = 2
+        self.gltf.accessors[0].sparse = sparse1
+
+        sparse2 = Sparse()
+        sparse2.indices = AccessorSparseIndices()
+        sparse2.indices.bufferView = 1
+        self.gltf.accessors[1].sparse = sparse2
+
+        self.gltf.remove_bufferView(1)
+        self.gltf.accessors[0].sparse.indices.bufferView == 1
+        self.gltf.accessors[1].sparse.indices.bufferView == 0  # should have prompted a warning
 
 
+class TestConvertImages:
     def test_from_datauri_to_file_with_name(self):
         # test that converting a data uri image to a PNG file works
         gltf = GLTF2()

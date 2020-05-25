@@ -45,7 +45,7 @@ from dataclasses_json import dataclass_json as dataclass_json
 from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 
-__version__ = "1.13.3"
+__version__ = "1.13.4"
 
 """
 About the GLTF2 file format:
@@ -443,7 +443,7 @@ class PbrMetallicRoughness(Property):
     metallicFactor: Optional[float] = 1.0
     roughnessFactor: Optional[float] = 1.0
     baseColorTexture: Optional[TextureInfo] = None
-    metallicRoughnessTexture: Optional[MaterialTexture] = None
+    metallicRoughnessTexture: Optional[TextureInfo] = None
 
 
 @dataclass_json
@@ -635,10 +635,25 @@ class GLTF2(Property):
         Remove a bufferView and update all the bufferView pointers in the GLTF object
         """
         bufferView = self.bufferViews.pop(buffer_view_id)
-        for objs in [self.accessors, self.images, [accessor.sparse for accessor in self.accessors]]:
-            for obj in objs:
+
+        def update_obj(title, obj):
+            if obj:
+                if obj.bufferView == buffer_view_id:
+                    warnings.warn(f"Removing bufferView {buffer_view_id} but {title}.bufferView still points to it. This may corrupt the GLTF.")
                 if obj.bufferView >= buffer_view_id:
                     obj.bufferView -= 1
+            else:
+                print(f"{obj} empty")
+
+        for i, accessor in enumerate(self.accessors):
+            update_obj(f"gltf.accessors[{i}]", accessor)
+            if accessor and accessor.sparse:
+                update_obj(f"gltf.accessors[{i}].sparse.indices", accessor.sparse.indices)
+                update_obj(f"gltf.accessors[{i}].sparse.values", accessor.sparse.values)
+
+        for i, obj in enumerate(self.images):
+            update_obj(f"gltf.images[{i}]", obj)
+
         return bufferView
 
     def export_image_to_file(self, image_index, override=False):

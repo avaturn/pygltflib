@@ -1,4 +1,4 @@
-dataclasses>=0.1
+dataclasses>=0.1; python_version<"3.7"
 dataclasses-json>=0.2.9
 deprecated
 pytest

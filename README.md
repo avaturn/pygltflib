@@ -57,6 +57,18 @@ glb = GLTF2().load(glb_filename)  # load method auto detects based on extension
 glb = GLTF2().load_binary("BinaryGLTF.glk")   # load_json and load_binary helper methods
 ```
 
+
+#### Access the first node (the objects comprising the scene) of a scene?
+
+```python3
+gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+current_scene = gltf.scenes[gltf.scene]
+node_index = current_scene.nodes[0]  # scene.nodes is the indices, not the objects 
+box = gltf.nodes[nodex_index]
+box.matrix  # will output vertices for the box object
+```
+
+
 #### Convert buffers to glb binary buffers?
 
 ```python3
@@ -96,7 +108,6 @@ gltf.materials[0].extensions['ADOBE_materials_thin_transparency']
 
 ```
 
-
 #### Add a custom attribute to Attributes?
 ```python3
 # Application-specific semantics must start with an underscore, e.g., _TEMPERATURE.
@@ -106,6 +117,10 @@ a._MYCUSTOMATTRIBUTE = 123
 gltf.meshes[0].primitives[0].attributes._MYOTHERATTRIBUTE = 456
 ```
 
+#### Remove a bufferView?
+```python3
+gltf.remove_bufferView(0)  # this will update all accessors, images and sparse accessors to remove the first bufferView
+```
 
 #### Validate a gltf object?
 ```python3
@@ -182,11 +197,22 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Jon Time
 * Laurie O
 * Peter Suter
+* Frédéric Devernay
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.4
+    * update `metallicRoughnessTexture` to use `TextureInfo`
+    * update requirements to not install dataclasses in python 3.7 and above
+    * improve `remove_bufferView` to warn if leaving dangling references to removed bufferView
+    * fix `remove_bufferView` when sparse accessor is None
+    * fix spelling of `InvalidAccessorSparseIndicesComponentTypeException`
+    * add tests for `remove_bufferView`
+    * add node access and remove_bufferView examples to README
+    
+
 * 1.13.3
     * add support to `GLTF.convert_images` to convert from buffers to image files. NOTE: Does not update buffer yet.
     * add support to `GLTF.convert_images` to convert from buffers to data uris. NOTE: Does not update buffer yet.
@@ -522,7 +548,7 @@ There is a convenience method named `convert_images` that can help.
 >>> gltf.images[0].name  # will be myfile.png
 
 
->>> # embed an image file to your GLTF.
+>>> # create an image file from GLTF data uris
 
 >>> from pathlib import Path
 >>> from pygltflib.utils import ImageFormat, Image
@@ -632,7 +658,7 @@ return information on validation warnings/errors please open a ticket on our git
 | accessor min and max arrays must be valid length | yes | InvalidArrayLengthException
 | accessor min and max arrays must be same length | yes | MismatchedArrayLengthException
 | mesh.primitive.mode must be valid | yes | InvalidMeshPrimitiveMode 
-| accessor.sparse.indices.componentType must be valid |  yes | InvalidAcccessorSparseIndicesComponentTypeException
+| accessor.sparse.indices.componentType must be valid |  yes | InvalidAccessorSparseIndicesComponentTypeException
 | bufferView byteOffset and byteStrides must be valid | yes | InvalidValueError
 | bufferView targets must be valid | yes | InvalidBufferViewTarget
 | all other tests | no  
