@@ -481,12 +481,11 @@ class Sampler(Property):
 class Node(Property):
     mesh: Optional[int] = None
     skin: Optional[int] = None
-    rotation: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0, 1.0])
-    translation: Optional[List[float]] = field(default_factory=lambda: [0.0, 0.0, 0.0])
-    scale: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    rotation: Optional[List[float]] = None
+    translation: Optional[List[float]] = None
+    scale: Optional[List[float]] = None
     children: Optional[List[int]] = field(default_factory=list)
-    matrix: Optional[List[float]] = field(
-        default_factory=lambda: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0], )
+    matrix: Optional[List[float]] = None
     camera: Optional[int] = None
     name: Optional[str] = None
 
