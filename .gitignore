@@ -1,2 +1,7 @@
 .idea
 __pycache__
+
+# Ignoreing virtual environment, editor, egg files
+.venv
+.vscode
+*.egg-info
