@@ -125,11 +125,12 @@ gltf.remove_bufferView(0)  # this will update all accessors, images and sparse a
 #### Validate a gltf object?
 ```python3
 from pygltflib import GLTF2
-from pygltflib.utils import validator
+from pygltflib.validator import validate, summary
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
-validator(gltf)
-# Currently this experimental validator only validates a few rules about GLTF2 objects
+validate(gltf)  # will throw an error depending on the problem
+summary(gltf)  # will pretty print human readable summary of errors
+# NOTE: Currently this experimental validator only validates a few rules about GLTF2 objects
 ```
 
 #### Export texture images from a GLTF file to their own PNG files
@@ -198,11 +199,18 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Laurie O
 * Peter Suter
 * Frédéric Devernay
+* Julian Stirling
 
 #### Thanks
 `pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 #### Changelog
+* 1.13.5
+    * fix Matrix, Translation, Scale, and Rotation to default to None
+    * change `utils.validator` by moving to `validator.validate`
+    * add `validator.summary` to provide human readable output of validator
+    * add some more unit tests
+
 * 1.13.4
     * add warning to `remove_bufferView` if leaving dangling references to removed bufferView
     * add tests for `remove_bufferView`
