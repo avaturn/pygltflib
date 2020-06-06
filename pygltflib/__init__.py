@@ -282,7 +282,7 @@ class Attributes:
             setattr(self, key, value)
 
     def __repr__(self):
-        return self.__class__.__qualname__ + f'(' + ', '.join([f"{f}={v}" for f, v in self.__dict__.items()]) + ')'
+        return self.__class__.__qualname__ + '(' + ', '.join([f"{f}={v}" for f, v in self.__dict__.items()]) + ')'
 
     def to_json(self, *args, **kwargs):
         # Attributes objects can have custom attrs, so use our own json conversion methods.
@@ -638,7 +638,8 @@ class GLTF2(Property):
         def update_obj(title, obj):
             if obj:
                 if obj.bufferView == buffer_view_id:
-                    warnings.warn(f"Removing bufferView {buffer_view_id} but {title}.bufferView still points to it. This may corrupt the GLTF.")
+                    warnings.warn(f"Removing bufferView {buffer_view_id} but "
+                                  f"{title}.bufferView still points to it. This may corrupt the GLTF.")
                 if obj.bufferView >= buffer_view_id:
                     obj.bufferView -= 1
             else:
@@ -730,11 +731,11 @@ class GLTF2(Property):
                             image.uri = f'data:{mime};base64,{encoded_string}'
                 elif image.bufferView:
                     # TODO: remove bufferView from GLTF when create images or datauris from buffer data
-                    warnings.warn("pygltflib currently does not remove image data from the buffer when converting to data uri."
+                    warnings.warn("pygltflib currently does not remove image data "
+                                  "from the buffer when converting to data uri."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     data = self.binary_blob()
                     bufferView = self.bufferViews[image.bufferView]
-                    buffer = self.buffers[bufferView.buffer]
                     image_data = data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength]
                     encoded_string = str(base64.b64encode(image_data).decode('utf-8'))
                     image.uri = f'data:{image.mimeType};base64,{encoded_string}'
@@ -751,7 +752,7 @@ class GLTF2(Property):
                 continue
             elif image_format == ImageFormat.FILE:   # convert to images
                 file_name = self.export_image_to_file(image_index, override)
-                if file_name: # replace data uri with pointer to file
+                if file_name:  # replace data uri with pointer to file
                     image.uri = file_name
 
     def convert_buffers(self, buffer_format, override=False):
