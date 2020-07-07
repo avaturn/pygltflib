@@ -10,10 +10,10 @@ It supports the entire specification, including materials and animations. Main f
 
 # Table of Contents
 
-* [Quickstart](##Quickstart) - install and usage snippets
-* [About](##About) - Roadmap, contributors and changelong
-* [More Detailed Usage](##More Detailed Usage) - full length usage examples
-* [Running the tests](##Running the tests)
+* [Quickstart](#quickstart) - install and usage snippets
+* [About](#about) - Roadmap, contributors and changelong
+* [More Detailed Usage](#more-detailed-usage) - full length usage examples
+* [Running the tests](#running-the-tests)
 
 ## Quickstart
 
