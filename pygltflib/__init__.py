@@ -45,7 +45,7 @@ from dataclasses_json import dataclass_json as dataclass_json
 from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 
-__version__ = "1.13.5"
+__version__ = "1.13.6"
 
 """
 About the GLTF2 file format:

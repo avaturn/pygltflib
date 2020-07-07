@@ -8,6 +8,13 @@ It supports the entire specification, including materials and animations. Main f
 * Extensions
 * All attributes are type-hinted
 
+# Table of Contents
+
+* [Quickstart](##Quickstart) - install and usage snippets
+* [About](##About) - Roadmap, contributors and changelong
+* [More Detailed Usage](##More Detailed Usage) - full length usage examples
+* [Running the tests](##Running the tests)
+
 ## Quickstart
 
 ```
@@ -168,6 +175,8 @@ gltf.images[0].name  # will be myfile.png
 ```
 
 
+### More Detailed Usage Below
+
 ## About
 This is an unofficial library that tracks the [official file format](https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md) for GLTF2. 
 
@@ -182,14 +191,14 @@ Check the table below for an idea of which sample models validate.
 Questions? Contributions? Bug reports? Open an issue on the [gitlab page for the project](https://gitlab.com/dodgyville/pygltflib).
 We are very interested in hearing your use cases for `pygltflib` to help drive the roadmap.
 
-#### Roadmap
+### Roadmap
 * Add helper functions for creating meshes
 * Test coverage
 * Enforce single underscore on custom Attribute attributes 
 * Investigate creating classes from extensions
 * Automated validation and visual inspection
 
-#### Contributors
+### Contributors
 * Luke Miller
 * Sebastian Höffner
 * Arthur van Hoff
@@ -200,11 +209,14 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Peter Suter
 * Frédéric Devernay
 * Julian Stirling
+* Johannes Deml
 
 #### Thanks
-`pygltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
+`pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
-#### Changelog
+### Changelog
+* 1.13.6
+    * add 4th array element to `baseColorFactor` to match specification
 * 1.13.5
     * fix Matrix, Translation, Scale, and Rotation to default to None
     * change `utils.validator` by moving to `validator.validate`
@@ -346,9 +358,7 @@ Note: These examples use the official [sample models](https://github.com/Khronos
 
 https://github.com/KhronosGroup/glTF-Sample-Models
 
-
-
-##### A simple mesh
+### A simple mesh
 ```python3
 from pygltflib import *
 
@@ -510,9 +520,9 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 <a bunch of binary data>
 ```
 
-#### Converting files
+### Converting files
 
-##### First method
+#### First method
 
 ```python3
 >>> from pygltflib import GLTF2
@@ -526,7 +536,7 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 >>> gltf.save("test.glb")
 ```
 
-##### Second method using utils
+#### Second method using utils
 
 ```python3
 >>> from pygltflib import GLTF2
@@ -540,7 +550,7 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 ```
 
-#### Converting buffers 
+### Converting buffers 
 The data for a buffer in a GLTF2 files can be stored in the buffer object's URI string 
 or in a binary file pointed to by the buffer objects' URI string or as a binary blob
 inside a GLB file.
@@ -569,7 +579,7 @@ Warning: Unable to save data uri to glb format.
 >>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
 ```
 
-#### Converting texture images
+### Converting texture images
 The image data for textures in GLTF2 files can be stored in the image objects URI string
 or in an image file pointed to by the image objects' URI string or as part of the buffer.
 
@@ -619,7 +629,7 @@ True
 ```
 
 
-#### Extensions
+### Extensions
 The GLTF2 spec allows for extensions to added to any component of a GLTF file.
 
 As of writing (August 2019) there are [about a dozen extensions from Khronos and other vendors](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/)
