@@ -10,12 +10,46 @@ It supports the entire specification, including materials and animations. Main f
 
 # Table of Contents
 
-* [Quickstart](#quickstart) - install and usage snippets
-* [About](#about) - Roadmap, contributors and changelong
-* [More Detailed Usage](#more-detailed-usage) - full length usage examples
+* [Quickstart](#quickstart)
+  * [Install](#install)
+  * [How do I...](#how-do-i)
+    * [Create an empty GLTF2 object?](#create-an-empty-gltf2-object)
+    * [Add a scene?](#add-a-scene)
+    * [Load a file?](#load-a-file)
+    * [Load a binary GLB file?](#load-a-binary-glb-file)
+    * [Load a binary file with an unusual extension?](#load-a-binary-file-with-an-unusual-extension)
+    * [Access the first node (the objects comprising the scene) of a scene?](#access-the-first-node-the-objects-comprising-the-scene-of-a-scene)
+    * [Convert buffers to GLB binary buffers?](#convert-buffers-to-glb-binary-buffers)
+    * [Convert buffer to data uri (embedded) buffer?](#convert-buffer-to-data-uri-embedded-buffer)
+    * [Convert buffers to binary file (external) buffers?](#convert-buffers-to-binary-file-external-buffers)
+    * [Convert a glb to a gltf file?](#convert-a-glb-to-a-gltf-file)
+    * [Access an extension?](#access-an-extension)
+    * [Add a custom attribute to Attributes?](#add-a-custom-attribute-to-attributes)
+    * [Remove a bufferView?](#remove-a-bufferview)
+    * [Validate a gltf object?](#validate-a-gltf-object)
+    * [Export texture images from a GLTF file to their own PNG files?](#export-texture-images-from-a-gltf-file-to-their-own-png-files)
+    * [Export texture images from a GLTF file to their own PNG files using custom file names?](#export-texture-images-from-a-gltf-file-to-their-own-png-files-using-custom-file-names)
+    * [Import PNG files as textures into a GLTF?](#import-png-files-as-textures-into-a-gltf)
+* [About](#about)
+  * [Roadmap](#roadmap)
+  * [Contributors](#contributors)
+  * [Thanks](#thanks)
+  * [Changelog](#changelog)
+  * [Installing](#installing)
+  * [Source](#source)
+* [More Detailed Usage](#more-detailed-usage)
+  * [A simple mesh](#a-simple-mesh)
+  * [Reading vertex data from a primitive and/or getting bounding sphere](#reading-vertex-data-from-a-primitive-andor-getting-bounding-sphere)
+  * [Loading and saving](#loading-and-saving)
+  * [Converting files](#converting-files)
+  * [Converting buffers](#converting-buffers)
+  * [Converting texture images](#converting-texture-images)
+  * [Extensions](#extensions)
 * [Running the tests](#running-the-tests)
 
 ## Quickstart
+
+### Install
 
 ```
 pip install pygltflib
@@ -51,7 +85,7 @@ filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
 ```
 
-#### Load a binary glb file?
+#### Load a binary GLB file?
 
 ```python3
 glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
@@ -340,9 +374,13 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
     * initial release
 
 
-## Install
+## Installing
 ```
 pip install pygltflib
+```
+or
+```
+py -m pip install pygltflib
 ```
 
 
