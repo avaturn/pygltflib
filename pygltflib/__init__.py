@@ -439,7 +439,7 @@ class NormalMaterialTexture(Property):
 @dataclass_json
 @dataclass
 class PbrMetallicRoughness(Property):
-    baseColorFactor: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+    baseColorFactor: Optional[List[float]] = field(default_factory=lambda: [1.0, 1.0, 1.0, 1.0])
     metallicFactor: Optional[float] = 1.0
     roughnessFactor: Optional[float] = 1.0
     baseColorTexture: Optional[TextureInfo] = None
