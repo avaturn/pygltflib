@@ -566,7 +566,7 @@ class TestDefaults:
         obj.pbrMetallicRoughness = pbr = PbrMetallicRoughness()
         gltf.materials.append(obj)
         a = gltf_to_json(gltf)
-        assert pbr.baseColorFactor == [1.0, 1.0, 1.0]
+        assert pbr.baseColorFactor == [1.0, 1.0, 1.0, 1.0]
         assert pbr.metallicFactor == 1.0
         assert pbr.roughnessFactor == 1.0
 
@@ -579,6 +579,7 @@ class TestDefaults:
     {
       "pbrMetallicRoughness": {
         "baseColorFactor": [
+          1.0,
           1.0,
           1.0,
           1.0

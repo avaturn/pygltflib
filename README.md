@@ -249,6 +249,8 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.13.7
+    * change docs and code to be more readable
 * 1.13.6
     * add 4th array element to `baseColorFactor` to match specification
 * 1.13.5
