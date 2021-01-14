@@ -844,7 +844,6 @@ class GLTF2(Property):
                   infer_missing=False,
                   **kw) -> A:
         init_kwargs = json.loads(s,
-                                 encoding=encoding,
                                  parse_float=parse_float,
                                  parse_int=parse_int,
                                  parse_constant=parse_constant,
