@@ -1,5 +1,6 @@
 * 1.13.8
-   * removed deprecated encoding argument from json parsers for python 3.1 onwards
+   * removed deprecated encoding argument from json parsers (deprecated since python 3.1)
+   * add support for python 3.9 (Margarida Silva)
 
 * 1.13.7
     * change docs and code to be more readable

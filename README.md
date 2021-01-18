@@ -252,8 +252,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 ### Changelog
 * 1.13.8
    * removed deprecated encoding argument from json parsers (deprecated since python 3.1)
+   * add support for python 3.9 (Margarida Silva)
 
-See [CHANGELOG.md] (https://github.com/dodgyville/pygltflib/CHANGLOG.md) for older versions
+See [CHANGELOG.md] (https://gitlab.com/dodgyville/pygltflib/-/blob/master/CHANGLOG.md) for older versions
 
 ## Installing
 ```
