@@ -31,21 +31,21 @@ from dataclasses import (
     fields,
 )
 from datetime import date, datetime
-from deprecated import deprecated
 from enum import Enum
 import json
+import mimetypes
 from pathlib import Path
 from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
 import warnings
 
-import mimetypes
 from dataclasses_json import dataclass_json as dataclass_json
 from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
+from deprecated import deprecated
 
-__version__ = "1.13.7"
+__version__ = "1.13.8"
 
 """
 About the GLTF2 file format:
@@ -837,7 +837,6 @@ class GLTF2(Property):
     def from_json(cls: A,
                   s: str,
                   *,
-                  encoding=None,
                   parse_float=None,
                   parse_int=None,
                   parse_constant=None,

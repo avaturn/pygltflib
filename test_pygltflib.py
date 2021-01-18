@@ -1,7 +1,7 @@
 """
 To use:
 link the glTF-Sample-Models into this directory eg:
-ln -s /home/user/projects/glTF-Sample-Models .
+ln -s /home/<user>/projects/pygltflib/glTF-Sample-Models .
 
 To run:
 pytest test_pygltflib.py
@@ -11,16 +11,15 @@ pytest -s test_pygltflib.py
 
 A single test class:
 pytest test_pygltflib.py::TextValidator
-
-
 """
 
 import base64
 from dataclasses import dataclass
+import logging
+import os
 import pathlib
 import shutil
 import tempfile
-import warnings
 
 import pytest
 
@@ -69,6 +68,7 @@ PATH = "glTF-Sample-Models"
 
 print(f"Testing version {pygltflib.__version__}")
 
+KHRONOS_AVAILABLE = pathlib.Path(PATH).exists()
 
 class TestValidator:
     def setup_method(self, _test_method):
@@ -725,9 +725,6 @@ class TestConvertImages:
             gltf.convert_images(ImageFormat.FILE)
             assert gltf.images[0].uri == p.name
 
-            p2 = pathlib.Path("/home/luke/Projects/pygltflib/test.png")
-            shutil.copy(p, p2)
-
             with open(p, "rb") as image_file:
                 data = image_file.read()
             assert data == base64.b64decode(image_data)
@@ -776,6 +773,9 @@ class TestConvertImages:
 
     def test_from_binaryblob_to_file(self):
         # test that converting a PNG image stored in binary blob to a file
+        if not KHRONOS_AVAILABLE:
+            logging.warning("khronos sample data not available in %s"%os.getcwd())
+            return
         filename = "glTF-Sample-Models/2.0/BoxTextured/glTF-Binary/BoxTextured.glb"
         gltf = GLTF2().load(filename)
         with tempfile.TemporaryDirectory() as tmpdirname:
