@@ -17,7 +17,7 @@ import base64
 from dataclasses import dataclass
 import logging
 import os
-import pathlib
+from pathlib import Path
 import shutil
 import tempfile
 
@@ -32,10 +32,9 @@ from pygltflib import (
     UNSIGNED_BYTE,
     UNSIGNED_INT,
     UNSIGNED_SHORT,
-    VEC2, VEC3, VEC4,
+    VEC3,
     Accessor,
     AccessorSparseIndices,
-    Asset,
     Attributes,
     Buffer,
     BufferFormat,
@@ -51,7 +50,6 @@ from pygltflib import (
     Property,
     Scene,
     Sparse,
-    json_serial,
 )
 from pygltflib.utils import (
     add_primitive,
@@ -68,27 +66,28 @@ PATH = "glTF-Sample-Models"
 
 print(f"Testing version {pygltflib.__version__}")
 
-KHRONOS_AVAILABLE = pathlib.Path(PATH).exists()
+KHRONOS_AVAILABLE = Path(PATH).exists()
+
 
 class TestValidator:
     def setup_method(self, _test_method):
-        path = pathlib.Path(PATH)
+        path = Path(PATH)
         if not path.exists():
             raise NotADirectoryError("Unable to find Khronos sample files at ", path.absolute())
 
     def test_Triangle(self):
-        fname = pathlib.Path(PATH).joinpath("2.0/Triangle/glTF/Triangle.gltf")
+        fname = Path(PATH).joinpath("2.0/Triangle/glTF/Triangle.gltf")
         gltf = GLTF2().load(fname)
         assert gltf.asset.version == "2.0"
 
     def test_Triangles(self):
-        fname = pathlib.Path(PATH).joinpath("2.0/SimpleMeshes/glTF/SimpleMeshes.gltf")
+        fname = Path(PATH).joinpath("2.0/SimpleMeshes/glTF/SimpleMeshes.gltf")
         gltf = GLTF2().load(fname)
         assert gltf.asset.version == "2.0"
         assert gltf.bufferViews[0].buffer == gltf.bufferViews[1].buffer
 
     def test_BoxVertexColors(self):
-        fname = pathlib.Path(PATH).joinpath("2.0/BoxVertexColors/glTF-Embedded/BoxVertexColors.gltf")
+        fname = Path(PATH).joinpath("2.0/BoxVertexColors/glTF-Embedded/BoxVertexColors.gltf")
         gltf = GLTF2().load(fname)
         assert gltf.asset.version == "2.0"
         assert gltf.accessors[0].bufferView == 0
@@ -98,19 +97,19 @@ class TestValidator:
 
 class TestIO:
     def test_load_glb(self):
-        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
         reference = GLTF2().load(r)
         assert len(reference.buffers) == 1
         assert type(reference) == GLTF2
 
     def test_load_glb_static(self):
-        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
         reference = GLTF2.load(r)
         assert len(reference.buffers) == 1
         assert type(reference) == GLTF2
 
     def test_load_glb_class(self):
-        r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
 
         class GLTFGoose(GLTF2):
             pass
@@ -121,13 +120,13 @@ class TestIO:
 
     def test_save_glb2glb(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
-            r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
             reference = GLTF2().load(r)
 
-            f = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            f = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
             glb1 = GLTF2().load(r)
 
-            t = pathlib.Path(tmpdirname) / "glb2glb.glb"
+            t = Path(tmpdirname) / "glb2glb.glb"
             glb1.save(t)
             glb2 = GLTF2().load(t)
 
@@ -142,47 +141,67 @@ class TestIO:
 
 
 class TestOutput:
-    def test_Box(self):
+    def test_box(self):
         """ Load a GLB saved by us from the original GLTF"""
-        fname = pathlib.Path("validator/Box_gltf.glb")
-        gltf = GLTF2().load(fname)
+        input_fname = Path("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+        input_gltf = GLTF2().load(input_fname)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_fname = Path(tmpdirname) / "Box.glb"
+            input_gltf.save_binary(output_fname)
+
+            # load from glb
+            gltf = GLTF2().load(output_fname)
         assert gltf.asset.version == "2.0"
         assert len(gltf.bufferViews) == 2
         assert gltf.accessors[2].bufferView == 1
 
-    def test_AnimatedTriangle(self):
+    def test_animated_triangle(self):
         """ Load a GLB saved by us from the original GLTF"""
-        fname = pathlib.Path("validator/AnimatedTriangle_gltf.glb")
-        gltf = GLTF2().load(fname)
+        input_fname = Path("glTF-Sample-Models/2.0/AnimatedTriangle/glTF/AnimatedTriangle.gltf")
+        input_gltf = GLTF2().load(input_fname)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_fname = Path(tmpdirname) / "AnimatedTriangle.glb"
+            input_gltf.save_binary(output_fname)
+
+            # load from glb
+            gltf = GLTF2().load(output_fname)
+
         assert gltf.asset.version == "2.0"
         assert [(i, x.bufferView) for i, x in enumerate(gltf.accessors)] == [(0, 0), (1, 1), (2, 2), (3, 2)]
 
-    def test_Avocado(self):
+    def test_avocado(self):
         """ Load a GLB saved by us from the original GLTF"""
-        fname = pathlib.Path(PATH).joinpath("2.0/Avocado/glTF/Avocado.gltf")
-        gltf = GLTF2().load(fname)
-        gltf.save("validator/Avocado_gltf.glb")
+        input_fname = Path(PATH).joinpath("2.0/Avocado/glTF/Avocado.gltf")
+        input_gltf = GLTF2().load(input_fname)
 
-        fname = pathlib.Path(PATH).joinpath("2.0/Avocado/glTF-Binary/Avocado.glb")
-        glb = GLTF2().load(fname)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_fname = Path(tmpdirname) / "Avocado.glb"
+            input_gltf.save_binary(output_fname)
 
-        fname = pathlib.Path("validator/Avocado_gltf.glb")
-        glbnew = GLTF2().load(fname)
-        assert glb.asset.version == "2.0"
+            # load from glb
+            our_glb = GLTF2().load(output_fname)
+
+            # load reference glb
+
+            ref_fname = Path(PATH).joinpath("2.0/Avocado/glTF-Binary/Avocado.glb")
+            ref_glb = GLTF2().load(ref_fname)
+
+        assert our_glb.asset.version == "2.0"
+        # assert ref_glb.bufferViews == our_glb.bufferViews
 
 
 class TestConversion:
     def setup_method(self, _test_method):
-        path = pathlib.Path(PATH)
+        path = Path(PATH)
         if not path.exists():
             raise NotADirectoryError("Unable to find Khronos sample files at ", path.absolute())
 
-    def test_loadGLB(self):
+    def test_load_glb(self):
         f = "BrainStem"
-        fname = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
+        fname = Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
         glb = GLTF2().load(fname)
         print("data", glb._glb_data[:100])
-        fnamejson = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF/{f}.gltf")
+        fnamejson = Path(PATH).joinpath(f"2.0/{f}/glTF/{f}.gltf")
         gltf = GLTF2().load(fnamejson)
         gltf.save("test.glb")
         glbed = GLTF2().load("test.glb")
@@ -191,12 +210,12 @@ class TestConversion:
 
     def test_loadGLBsaveGLB(self):
         f = "BrainStem"
-        fname = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
+        fname = Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
         glb = GLTF2().load(fname)
         return
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "test.glb"
+            t = Path(tmpdirname) / "test.glb"
             glb.save(t)
             glbed = GLTF2().load(t)
 
@@ -204,10 +223,10 @@ class TestConversion:
 
     def test_loadGLBsaveGLTF(self):
         f = "BrainStem"
-        fname = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
+        fname = Path(PATH).joinpath(f"2.0/{f}/glTF-Binary/{f}.glb")
         glb = GLTF2().load(fname)
 
-        fnamejson = pathlib.Path(PATH).joinpath(f"2.0/{f}/glTF/{f}.gltf")
+        fnamejson = Path(PATH).joinpath(f"2.0/{f}/glTF/{f}.gltf")
         gltf = GLTF2().load(fnamejson)
 
         glb.save("test.gltf")
@@ -282,13 +301,13 @@ class TestBufferConversions:
             assert gltf.buffers[0].uri == data
 
     def test_buffer_conversions_realworld(self):
-        fembedded = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        fembedded = Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
         embedded = GLTF2().load(fembedded)
 
-        fbinary = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+        fbinary = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
         binary = GLTF2().load(fbinary)
 
-        ffilebased = pathlib.Path(PATH) / "2.0/Box/glTF/Box.gltf"
+        ffilebased = Path(PATH) / "2.0/Box/glTF/Box.gltf"
         filebased = GLTF2().load(ffilebased)
 
         assert len(embedded.buffers) == 1
@@ -308,22 +327,22 @@ class TestBufferConversions:
         assert binary.buffers == embedded.buffers
 
     def test_buffer_conversions_binfile(self):
-        src = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        src = Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
         with tempfile.TemporaryDirectory() as tmpdirname:
-            dest = pathlib.Path(tmpdirname) / "Box.gltf"
-            bindest = pathlib.Path(tmpdirname) / "Box.glb"
+            dest = Path(tmpdirname) / "Box.gltf"
+            bindest = Path(tmpdirname) / "Box.glb"
             shutil.copy(str(src), str(dest))
             embedded = GLTF2().load(dest)
 
             embedded.convert_buffers(BufferFormat.BINFILE)
             embedded.save(bindest)
 
-            assert (pathlib.Path(tmpdirname) / "0.bin").is_file()
+            assert (Path(tmpdirname) / "0.bin").is_file()
 
 
 class TestExtensions:
     def test_load_mesh_primitive_extensions(self):
-        f = pathlib.Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
+        f = Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
         gltf = GLTF2().load(f)
         assert gltf.meshes[0].primitives[0].extensions != None
 
@@ -337,10 +356,10 @@ class TestExtensions:
         assert extension == {'bufferView': 2, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
 
     def test_save_mesh_primitive_extensions(self):
-        f = pathlib.Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
+        f = Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
         gltf = GLTF2().load(f)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "extensions.gltf"
+            t = Path(tmpdirname) / "extensions.gltf"
             gltf.save(t)
             gltf2 = GLTF2().load(t)
         extension = gltf2.meshes[2].primitives[0].extensions["KHR_draco_mesh_compression"]
@@ -412,7 +431,7 @@ class TestAttributes:
         gltf.meshes[0].primitives[0].attributes._MYCUSTOMATTRIBUTE = 124
         gltf.meshes[0].primitives[0].attributes.POSITION = 1
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "attributes.gltf"
+            t = Path(tmpdirname) / "attributes.gltf"
             gltf.save(t)
             gltf2 = GLTF2().load(t)
 
@@ -423,32 +442,32 @@ class TestAttributes:
 
 class TestBuffers:
     def test_buffer_datauri_load_gltf(self):
-        f = pathlib.Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
+        f = Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
         gltf = GLTF2().load(f)
 
         assert gltf.buffers[
                    0].uri == "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
 
     def test_buffer_datauri_save_gltf2gltf(self):
-        f = pathlib.Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
+        f = Path(PATH) / "2.0/Triangle/glTF-Embedded/Triangle.gltf"
         gltf = GLTF2().load(f)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "buffers.gltf"
+            t = Path(tmpdirname) / "buffers.gltf"
             gltf.save(t)
             gltf2 = GLTF2().load(t)
         assert gltf2.buffers[
                    0].uri == "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
 
     def test_buffer_datauri_save_gltf2glb(self):
-        f = pathlib.Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
+        f = Path(PATH) / "2.0/Box/glTF-Embedded/Box.gltf"
         gltf = GLTF2().load(f)
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "buffers.glb"
+            t = Path(tmpdirname) / "buffers.glb"
             gltf.convert_buffers(BufferFormat.BINARYBLOB)
             gltf.save(t)
             print("buff", gltf.binary_blob())
             glb = GLTF2().load(t)
-            r = pathlib.Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
+            r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
             reference = GLTF2().load(r)
 
        # assert glb.binary_blob() == reference.binary_blob()
@@ -694,8 +713,8 @@ class TestBufferViews:
         self.gltf.accessors[1].sparse = sparse2
 
         self.gltf.remove_bufferView(1)
-        self.gltf.accessors[0].sparse.indices.bufferView == 1
-        self.gltf.accessors[1].sparse.indices.bufferView == 0  # should have prompted a warning
+        assert self.gltf.accessors[0].sparse.indices.bufferView == 1
+        assert self.gltf.accessors[1].sparse.indices.bufferView == 0  # should have prompted a warning
 
 
 class TestConvertImages:
@@ -709,14 +728,14 @@ class TestConvertImages:
         gltf.images.append(image)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "images.gltf"
+            t = Path(tmpdirname) / "images.gltf"
             gltf.save(t)
             gltf = GLTF2().load(t)
 
             assert gltf.images[0].uri.endswith("kSuQmCC") is True
             gltf.convert_images(ImageFormat.FILE)
 
-            p = pathlib.Path(tmpdirname) / "test.png"
+            p = Path(tmpdirname) / "test.png"
 
             assert gltf.images[0].uri == p.name
             assert p.exists()
@@ -738,7 +757,7 @@ class TestConvertImages:
         gltf.images.append(image)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            t = pathlib.Path(tmpdirname) / "images.gltf"
+            t = Path(tmpdirname) / "images.gltf"
             gltf.save(t)
             gltf = GLTF2().load(t)
 
@@ -746,7 +765,7 @@ class TestConvertImages:
             gltf.convert_images(ImageFormat.FILE)
 
             # verify auto generated name has worked
-            p = pathlib.Path(tmpdirname) / "0.png"
+            p = Path(tmpdirname) / "0.png"
             assert gltf.images[0].uri == p.name
             assert p.exists()
 
@@ -760,7 +779,7 @@ class TestConvertImages:
         gltf.images.append(image)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            png_path = pathlib.Path(tmpdirname) / "test.png"
+            png_path = Path(tmpdirname) / "test.png"
 
             # setup PNG file
             with open(png_path, "wb") as image_file:
