@@ -45,7 +45,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.13.8"
+__version__ = "1.13.9"
 
 """
 About the GLTF2 file format:
@@ -977,9 +977,7 @@ class GLTF2(Property):
         return obj
 
     @classmethod
-    def load_binary(cls, fname):
-        with open(fname, "rb") as f:
-            data = f.read()
+    def load_from_bytes(cls, data):
         magic = struct.unpack("<BBBB", data[:4])
         version, length = struct.unpack("<II", data[4:12])
         if bytearray(magic) != MAGIC:
@@ -1008,6 +1006,17 @@ class GLTF2(Property):
             index += chunk_length
             i += 1
         return obj
+
+    @classmethod
+    def load_binary(cls, fname):
+        with open(fname, "rb") as f:
+            data = f.read()
+        return cls.load_from_bytes(data)
+
+    @classmethod
+    def load_binary_from_file_object(cls, f):
+        data = f.read()
+        return cls.load_from_bytes(data)
 
     @classmethod
     def load(cls, fname):

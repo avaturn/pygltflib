@@ -724,7 +724,7 @@ class TestConvertImages:
         image = Image()
         image_data = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAGElEQVQIW2P4DwcMDAxAfBvMAhEQMYgcACEHG8ELxtbPAAAAAElFTkSuQmCC"
         image.uri = f"data:image/png;base64,{image_data}"
-        image.name = "test.png"
+        image.name = "test_pygltflib.png"
         gltf.images.append(image)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -735,7 +735,7 @@ class TestConvertImages:
             assert gltf.images[0].uri.endswith("kSuQmCC") is True
             gltf.convert_images(ImageFormat.FILE)
 
-            p = Path(tmpdirname) / "test.png"
+            p = Path(tmpdirname) / "test_pygltflib.png"
 
             assert gltf.images[0].uri == p.name
             assert p.exists()
@@ -771,15 +771,16 @@ class TestConvertImages:
 
     def test_from_file_to_datauri(self):
         # test that converting a PNG image to a data uri
-        gltf = GLTF2()
-        image = Image()
         image_data = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAGElEQVQIW2P4DwcMDAxAfBvMAhEQMYgcACEHG8ELxtbPAAAAAElFTkSuQmCC"
         image_uri = f"data:image/png;base64,{image_data}"
-        image.uri = "test.png"
+
+        gltf = GLTF2()
+        image = Image()
+        image.uri = "test_pygltflib.png"  # a real image file
         gltf.images.append(image)
 
         with tempfile.TemporaryDirectory() as tmpdirname:
-            png_path = Path(tmpdirname) / "test.png"
+            png_path = Path(tmpdirname) / "test_pygltflib.png"
 
             # setup PNG file
             with open(png_path, "wb") as image_file:

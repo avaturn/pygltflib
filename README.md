@@ -245,11 +245,19 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Julian Stirling
 * Johannes Deml
 * Margarida Silva 
+* Patiphan Wongklaew
 
 #### Thanks
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.13.9
+   * split GLTF2.load_binary into more useful class methods (Patiphan Wongklaew)
+      * GLTF2.load_binary - functions the same way as the original method
+      * GLTF2.load_from_bytes - takes raw bytes directly
+      * GLTF2.load_binary_from_file_object - loads from a file-like object
+   * add missing test image
+
 * 1.13.8
    * removed deprecated encoding argument from json parsers (deprecated since python 3.1)
    * add support for python 3.9 (Margarida Silva)
