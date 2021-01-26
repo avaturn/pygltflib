@@ -12,8 +12,6 @@ __version__ = re.search(
     ).group(1)
 
 
-
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -22,7 +20,8 @@ setuptools.setup(
     version=__version__,
     author="Luke Miller",
     author_email="dodgyville@gmail.com",
-    description="Python library for reading, writing and managing 3D objects in the Khronos Group gltf and gltf2 formats.",
+    description="Python library for reading, writing and managing 3D objects in the Khronos Group gltf and gltf2 "
+                "formats.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.com/dodgyville/pygltflib",

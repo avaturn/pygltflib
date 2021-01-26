@@ -246,6 +246,7 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Johannes Deml
 * Margarida Silva 
 * Patiphan Wongklaew
+* Alexander Druz
 
 #### Thanks
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 

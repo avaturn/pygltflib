@@ -2,7 +2,7 @@
 pygltflib : A Python library for reading, writing and handling GLTF files.
 
 
-Copyright (c) 2018, 2019 Luke Miller
+Copyright (c) 2018,2021 Luke Miller
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.13.9"
+__version__ = "1.13.10"
 
 """
 About the GLTF2 file format:
@@ -583,9 +583,12 @@ class GLTF2(Property):
         """
         return getattr(self, "_glb_data", None)
 
+    def set_binary_blob(self, blob):
+        setattr(self, "_glb_data", blob)
+
     def destroy_binary_blob(self):
         if hasattr(self, "_glb_data"):
-            self._glb_data = None
+            setattr(self, "_glb_data", None)
 
     def load_file_uri(self, uri):
         """
@@ -787,7 +790,7 @@ class GLTF2(Property):
                     warnings.warn("pygltflib currently unable to convert multiple buffers to a single binary blob."
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     return
-                self._glb_data = data
+                self.set_binary_blob(data)
                 buffer.uri = ''
             elif buffer_format == BufferFormat.DATAURI:
                 # convert buffer
@@ -881,75 +884,80 @@ class GLTF2(Property):
         self.buffers = original_buffers  # restore buffers
         return True
 
+    def save_to_bytes(self):
+        # setup
+        buffer_blob = b''
+        original_buffer_views = copy.deepcopy(self.bufferViews)
+        original_buffers = copy.deepcopy(self.buffers)
+
+        offset = 0
+        new_buffer = Buffer()
+        path = getattr(self, "_path", Path())
+        for i, bufferView in enumerate(self.bufferViews):
+            buffer = self.buffers[bufferView.buffer]
+            if buffer.uri == '':  # assume loaded from glb binary file
+                data = self.binary_blob()
+            elif buffer.uri.startswith("data"):
+                warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:20]} to glb, "
+                              "please save in gltf format instead or use the convert_buffers method first."
+                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                return []
+            elif Path(path, buffer.uri).is_file():
+                with open(Path(path, buffer.uri), 'rb') as fb:
+                    data = fb.read()
+            else:
+                warnings.warn(f"Unable to save bufferView {buffer.uri[:20]} to glb, skipping. "
+                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+                continue
+            byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0
+            byte_length = bufferView.byteLength
+            if byte_length % 4 != 0:  # pad each segment of binary blob
+                byte_length += 4 - byte_length % 4
+
+            buffer_blob += data[byte_offset:byte_offset + byte_length]
+
+            bufferView.byteOffset = offset
+            bufferView.byteLength = byte_length
+            bufferView.buffer = 0
+            offset += byte_length
+
+        new_buffer.byteLength = len(buffer_blob)
+        self.buffers = [new_buffer]
+
+        json_blob = self.gltf_to_json().encode("utf-8")
+
+        # pad each blob if needed
+        if len(json_blob) % 4 != 0:
+            json_blob += b'   '[0:4 - len(json_blob) % 4]
+
+        version = struct.pack('<I', GLTF_VERSION)
+        chunk_header_len = 8
+        length = len(MAGIC) + len(version) + 4 + chunk_header_len * 2 + len(json_blob) + len(buffer_blob)
+        self.bufferViews = original_buffer_views  # restore unpacked bufferViews
+        self.buffers = original_buffers  # restore unpacked buffers
+
+        # header is MAGIC, version, length
+        # json chunk is json_blob length, JSON, json_blob
+        # buffer chunk is length of buffer_blob, utf-8, buffer_blob
+        return [
+            MAGIC,
+            version,
+            struct.pack('<I', length),
+            struct.pack('<I', len(json_blob)),
+            bytes(JSON, 'utf-8'),
+            json_blob,
+            struct.pack('<I', len(buffer_blob)),
+            bytes(BIN, 'utf-8'),
+            buffer_blob
+        ]
+
     def save_binary(self, fname):
         with open(fname, 'wb') as f:
-            # setup
-
-            buffer_blob = b''
-            original_buffer_views = copy.deepcopy(self.bufferViews)
-            original_buffers = copy.deepcopy(self.buffers)
-
-            offset = 0
-            new_buffer = Buffer()
-            path = getattr(self, "_path", Path())
-            for i, bufferView in enumerate(self.bufferViews):
-                buffer = self.buffers[bufferView.buffer]
-                if buffer.uri == '':  # assume loaded from glb binary file
-                    data = self.binary_blob()
-                elif buffer.uri.startswith("data"):
-                    warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:20]} to glb, "
-                                  "please save in gltf format instead or use the convert_buffers method first."
-                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                    return False
-                elif Path(path, buffer.uri).is_file():
-                    with open(Path(path, buffer.uri), 'rb') as fb:
-                        data = fb.read()
-                else:
-                    warnings.warn(f"Unable to save bufferView {buffer.uri[:20]} to glb, skipping. "
-                                  "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                    continue
-                byte_offset = bufferView.byteOffset if bufferView.byteOffset is not None else 0
-                byte_length = bufferView.byteLength
-                if byte_length % 4 != 0:  # pad each segment of binary blob
-                    byte_length += 4 - byte_length % 4
-
-                buffer_blob += data[byte_offset:byte_offset + byte_length]
-
-                bufferView.byteOffset = offset
-                bufferView.byteLength = byte_length
-                bufferView.buffer = 0
-                offset += byte_length
-
-            new_buffer.byteLength = len(buffer_blob)
-            self.buffers = [new_buffer]
-
-            json_blob = self.gltf_to_json().encode("utf-8")
-
-            # pad each blob if needed
-            if len(json_blob) % 4 != 0:
-                json_blob += b'   '[0:4 - len(json_blob) % 4]
-
-            version = struct.pack('<I', GLTF_VERSION)
-            chunk_header_len = 8
-            length = len(MAGIC) + len(version) + 4 + chunk_header_len * 2 + len(json_blob) + len(buffer_blob)
-            self.bufferViews = original_buffer_views  # restore unpacked bufferViews
-            self.buffers = original_buffers  # restore unpacked buffers
-
-            # header
-            f.write(MAGIC)
-            f.write(version)
-            f.write(struct.pack('<I', length))
-
-            # json chunk
-            f.write(struct.pack('<I', len(json_blob)))
-            f.write(bytes(JSON, 'utf-8'))
-            f.write(json_blob)
-
-            # buffer chunk
-            f.write(struct.pack('<I', len(buffer_blob)))
-            f.write(bytes(BIN, 'utf-8'))
-            f.write(buffer_blob)
-
+            glb_structure = self.save_to_bytes()
+            if not glb_structure:
+                return False
+            for data in glb_structure:
+                f.write(data)
         return True
 
     def save(self, fname, asset=Asset()):
@@ -1002,7 +1010,7 @@ class GLTF2(Property):
                 raw_json = data[index:index + chunk_length].decode("utf-8")
                 obj = cls.from_json(raw_json, infer_missing=True)
             else:
-                obj._glb_data = data[index:index + chunk_length]
+                obj.set_binary_blob(data[index:index + chunk_length])
             index += chunk_length
             i += 1
         return obj
