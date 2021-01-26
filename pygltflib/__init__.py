@@ -195,9 +195,13 @@ def delete_empty_keys(dictionary):
     https://stackoverflow.com/questions/4255400/exclude-empty-null-values-from-json-serialization
     """
     for key, value in list(dictionary.items()):
+        if "extensions" in key and len(value) > 0:
+            print("extensions?")
         if value is None or (hasattr(value, '__iter__') and len(value) == 0):
             del dictionary[key]
-        elif isinstance(value, dict):
+        elif isinstance(value, dict) and key != "extensions":
+            # delete empty dicts except when the dictionary is an extension inside "extensions".
+            # The extension exemption is because we use dicts for extensions instead of dataclass objects
             delete_empty_keys(value)
         elif isinstance(value, list):
             for item in value:
@@ -1029,9 +1033,6 @@ class GLTF2(Property):
     @classmethod
     def load(cls, fname):
         path = Path(fname)
-        if not path.is_file():
-            print("ERROR: File not found", fname)
-            return None
         ext = path.suffix
         if ext.lower() in [".bin", ".glb"]:
             obj = cls.load_binary(fname)

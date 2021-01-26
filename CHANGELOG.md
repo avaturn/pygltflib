@@ -1,11 +1,13 @@
 * 1.13.10
-   * Add GLTF2.set_binary_blob for improved access of binary data
-   * splot GLTF2.save_binary into two methods
+   * NOTE: `GLTF2.load` now throws `FileNotFoundError` instead of failing silently on missing file.
+   * fix issue where extensions with empty but valid dicts were not saving 
+   * add `GLTF2.set_binary_blob` for improved access of binary data
+   * split `GLTF2.save_binary` into two methods
      * GLTF2.save_binary - functions the same way as the original method
      * GLTF2.save_to_bytes - returns an array containing a binary GLTF file in an array structure 
 
 * 1.13.9
-   * split GLTF2.load_binary into more useful class methods (Patiphan Wongklaew)
+   * split `GLTF2.load_binary` into more useful class methods (Patiphan Wongklaew)
       * GLTF2.load_binary - functions the same way as the original method
       * GLTF2.load_from_bytes - takes raw bytes directly
       * GLTF2.load_binary_from_file_object - loads from a file-like object

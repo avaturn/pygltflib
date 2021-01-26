@@ -63,10 +63,13 @@ from pygltflib.validator import (
 
 
 PATH = "glTF-Sample-Models"
+CPATH = "gltf-Sample-Copyrighted"
+CPATH = "gltf-Sample-Copyrighted"
 
 print(f"Testing version {pygltflib.__version__}")
 
 KHRONOS_AVAILABLE = Path(PATH).exists()
+COPYRIGHTED_AVAILABLE = Path(CPATH).exists()
 
 
 class TestValidator:
@@ -364,6 +367,46 @@ class TestExtensions:
             gltf2 = GLTF2().load(t)
         extension = gltf2.meshes[2].primitives[0].extensions["KHR_draco_mesh_compression"]
         assert extension == {'bufferView': 2, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
+
+    def test_save_mesh_primitive_extensions_glb(self):
+        f = Path(PATH).joinpath(f"2.0/ReciprocatingSaw/glTF-Draco/ReciprocatingSaw.gltf")
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = Path(tmpdirname) / "extensions.glb"
+            gltf.save(t)
+            glb = GLTF2().load(t)
+        extension = glb.meshes[2].primitives[0].extensions["KHR_draco_mesh_compression"]
+        assert extension == {'bufferView': 2, 'attributes': {'NORMAL': 0, 'POSITION': 1}}
+
+    def test_extension_khr_materials_unlit(self):
+        # tests when extensions are empty but valid
+        # uses a production file we can't distribute
+        # TODO: replace with alternative
+        if not COPYRIGHTED_AVAILABLE:
+            return
+        f = Path(CPATH).joinpath(f"ahri/gltf/ahri.gltf")
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = Path(tmpdirname) / "extensions.gltf"
+            gltf.save(t)
+            gltf2 = GLTF2().load(t)
+        extension = gltf2.materials[0].extensions["KHR_materials_unlit"]
+        assert extension == {}
+
+    def test_extension_khr_materials_unlit_glb(self):
+        # tests when extensions are empty but valid
+        # uses a production file we can't distribute
+        # TODO: replace with alternative
+        if not COPYRIGHTED_AVAILABLE:
+            return
+        f = Path(CPATH).joinpath(f"ahri/gltf/ahri.gltf")
+        gltf = GLTF2().load(f)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            t = Path(tmpdirname) / "extensions.glb"
+            gltf.save(t)
+            gltf2 = GLTF2().load(t)
+        extension = gltf2.materials[0].extensions["KHR_materials_unlit"]
+        assert extension == {}
 
     def test_top_level(self):
         gltf = GLTF2()
