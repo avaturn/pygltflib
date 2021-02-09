@@ -204,6 +204,11 @@ gltf.images[0].uri  # will now be cube.png and the texture image will be saved i
 ```
 
 #### Specify a path to my images when converting to files?
+By default pygltflib will load images from the same location as the GLTF file.
+
+It will also try and save image files to the that location when converting image buffers or data uris.
+
+You can override the destination using the 'path' argument to `convert_images`
 ```python3
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
