@@ -182,7 +182,7 @@ summary(gltf)  # will pretty print human readable summary of errors
 # NOTE: Currently this experimental validator only validates a few rules about GLTF2 objects
 ```
 
-#### Export texture images from a GLTF file to their own PNG files
+#### Export texture images from a GLTF file to their own PNG files?
 ```python3
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
@@ -192,7 +192,7 @@ gltf.convert_images(ImageFormat.FILE)
 gltf.images[0].uri  # will now be 0.png and the texture image will be saved in 0.png
 ```
 
-#### Export texture images from a GLTF file to their own PNG files using custom file names
+#### Export texture images from a GLTF file to their own PNG files using custom file names?
 ```python3
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
@@ -203,7 +203,19 @@ gltf.convert_images(ImageFormat.FILE)
 gltf.images[0].uri  # will now be cube.png and the texture image will be saved in cube.png
 ```
 
-#### Import PNG files as textures into a GLTF.
+#### Specify a path to my images when converting to files?
+```python3
+from pygltflib import GLTF2
+from pygltflib.utils import ImageFormat
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+gltf.images[0].name = "cube.png"  # will save the data uri to this file (regardless of data format)
+gltf.convert_images(ImageFormat.FILE, path='/destination/') 
+gltf.images[0].uri  # will now be cube.png and the texture image will be saved in /destination/cube.png
+```
+
+
+#### Import PNG files as textures into a GLTF?
 ```python3
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat, Image

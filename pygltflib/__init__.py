@@ -721,16 +721,20 @@ class GLTF2(Property):
                 image_file.write(data)
             return file_name
 
-    def convert_images(self, image_format, override=False):
+    def convert_images(self, image_format, path=None, override=False):
         """
         GLTF files can store the image data in three different formats: In the buffers, as a data
         uri string and as external images files. This converts the images between the formats.
 
         image_format (ImageFormat.ENUM): Destination format to convert images
+        path (str|Path): Path to the directory to use for loading or saving images
         override (bool): Override an image file if it already exists and is about to be replaced
 
         """
-        path: Path = getattr(self, "_path", Path())
+        if path is None:
+            path = getattr(self, "_path", Path())
+        else:
+            path = Path(path)
         for image_index, image in enumerate(self.images):
             if image_format == ImageFormat.DATAURI:  # convert to data uri
                 # load an image file or pull from the buffer
@@ -770,8 +774,7 @@ class GLTF2(Property):
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 continue
             elif image_format == ImageFormat.FILE:  # convert to images
-                destination_path: Path = getattr(self, "_path", Path())
-                file_name = self.export_image_to_file(image_index, destination_path, override)
+                file_name = self.export_image_to_file(image_index, path, override)
                 if file_name:  # replace data uri with pointer to file
                     image.uri = file_name
 

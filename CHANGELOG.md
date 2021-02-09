@@ -4,6 +4,8 @@
    * fix issue where override flag ignored when converting image.bufferView to image file
    * change image.bufferView export to image path handling to be same as image.uri export
    * add longer example of mesh->bytes->mesh (Alexander Druz)
+   * add GLTF.convert_images takes a 'path' argument that overrides the origin or destination
+     path when convert from or to files.
 
 * 1.13.10
    * NOTE: `GLTF2.load` now throws `FileNotFoundError` instead of failing silently on missing file.
