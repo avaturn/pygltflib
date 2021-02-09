@@ -14,12 +14,12 @@ It supports the entire specification, including materials and animations. Main f
   * [Install](#install)
   * [How do I...](#how-do-i)
     * [Create an empty GLTF2 object?](#create-an-empty-gltf2-object)
-    * [Create a mesh](#create-a-mesh)
     * [Add a scene?](#add-a-scene)
     * [Load a file?](#load-a-file)
     * [Load a binary GLB file?](#load-a-binary-glb-file)
     * [Load a binary file with an unusual extension?](#load-a-binary-file-with-an-unusual-extension)
     * [Access the first node (the objects comprising the scene) of a scene?](#access-the-first-node-the-objects-comprising-the-scene-of-a-scene)
+    * [Create a mesh?](#create-a-mesh)
     * [Convert buffers to GLB binary buffers?](#convert-buffers-to-glb-binary-buffers)
     * [Convert buffer to data uri (embedded) buffer?](#convert-buffer-to-data-uri-embedded-buffer)
     * [Convert buffers to binary file (external) buffers?](#convert-buffers-to-binary-file-external-buffers)
@@ -69,12 +69,6 @@ from pygltflib import GLTF2
 gltf = GLTF2()
 ```
 
-#### Create a mesh?
-Consult the longer examples in the second half of this document
-  * [A simple mesh](#a-simple-mesh)
-  * [Reading vertex data from a primitive and/or getting bounding sphere](#reading-vertex-data-from-a-primitive-andor-getting-bounding-sphere)
-  * [Create a mesh, convert to bytes, convert back to mesh](#create-a-mesh-convert-to-bytes-convert-back-to-mesh)
-
 #### Add a scene?
 
 ```python3
@@ -84,7 +78,6 @@ gltf = GLTF2()
 scene = Scene()
 gltf.scenes.append(scene)  # scene available at gltf.scenes[0]
 ```
-
 
 #### Load a file?
 
@@ -116,6 +109,13 @@ node_index = current_scene.nodes[0]  # scene.nodes is the indices, not the objec
 box = gltf.nodes[nodex_index]
 box.matrix  # will output vertices for the box object
 ```
+
+
+#### Create a mesh?
+Consult the longer examples in the second half of this document
+  * [A simple mesh](#a-simple-mesh)
+  * [Reading vertex data from a primitive and/or getting bounding sphere](#reading-vertex-data-from-a-primitive-andor-getting-bounding-sphere)
+  * [Create a mesh, convert to bytes, convert back to mesh](#create-a-mesh-convert-to-bytes-convert-back-to-mesh)
 
 
 #### Convert buffers to glb binary buffers?
