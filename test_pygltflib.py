@@ -855,6 +855,13 @@ class TestConvertImages:
             gltf.convert_images(ImageFormat.DATAURI)
             assert gltf.images[0].uri.startswith("data:image/png;base64")  # will now be populated
 
+    def test_export_image_to_file_bufferview_zero(self):
+        fname = Path(PATH).joinpath("2.0/Avocado/glTF-Binary/Avocado.glb")
+        glb = GLTF2().load(fname)
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            fname = glb.export_image_to_file(0, tmpdirname, True)
+            assert Path(fname).exists()
+
 
 class TestExamples:
     def test_a_simple_mesh(self):

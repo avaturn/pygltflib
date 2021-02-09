@@ -45,7 +45,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.13.10"
+__version__ = "1.14.0"
 
 """
 About the GLTF2 file format:
@@ -576,8 +576,9 @@ class GLTF2(Property):
     scenes: List[Scene] = field(default_factory=list)
     skins: List[Skin] = field(default_factory=list)
     textures: List[Texture] = field(default_factory=list)
-#    _glb_data: Any = None
-#    _path: Any = None
+
+    #    _glb_data: Any = None
+    #    _path: Any = None
 
     def binary_blob(self):
         """ Get the binary blob associated with glb files if available
@@ -636,6 +637,7 @@ class GLTF2(Property):
                           "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         return uri_format
 
+    # noinspection PyPep8Naming
     def remove_bufferView(self, buffer_view_id):
         """
         Remove a bufferView and update all the bufferView pointers in the GLTF object
@@ -663,13 +665,18 @@ class GLTF2(Property):
 
         return bufferView
 
-    def export_image_to_file(self, image_index, override=False):
+    def export_image_to_file(self, image_index, destination_path='', override=False):
+        """
+        image_index (int): Image index
+        destination_path (str|Path): Path where to save images
+        override (bool): Only save image if it does not already exist
+        """
+        destination_path = Path(destination_path)
         image = self.images[image_index]
-        path: Path = getattr(self, "_path", Path())
         if image.uri and not image.uri.startswith('data:'):
             # already in file format
-            if not (path / image.uri).exists():
-                warnings.warn(f"Image {image_index} is already stored in a file {path / image.uri} but file"
+            if not (destination_path / image.uri).exists():
+                warnings.warn(f"Image {image_index} is already stored in a file {destination_path / image.uri} but file"
                               f"does not appear to exist.")
             return None
         elif image.bufferView is not None:
@@ -686,7 +693,12 @@ class GLTF2(Property):
                 data = self.binary_blob()
                 extension = mimetypes.guess_extension(image.mimeType)
                 file_name = f"{image_index}{extension}"
-                with open(file_name, "wb") as f:
+                image_path = destination_path / file_name
+                if image_path.is_file() and not override:
+                    warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
+                    return None
+
+                with open(image_path, "wb") as f:
                     f.write(data[bufferView.byteOffset:bufferView.byteOffset + bufferView.byteLength])
                 return file_name
             return None
@@ -699,7 +711,7 @@ class GLTF2(Property):
             else:
                 extension = mimetypes.guess_extension(mime)
                 file_name = f"{image_index}{extension}"
-            image_path = path / file_name
+            image_path = destination_path / file_name
             if image_path.is_file() and not override:
                 warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
                 return None
@@ -714,7 +726,7 @@ class GLTF2(Property):
         GLTF files can store the image data in three different formats: In the buffers, as a data
         uri string and as external images files. This converts the images between the formats.
 
-        image_format (ImageFormat.ENUM)
+        image_format (ImageFormat.ENUM): Destination format to convert images
         override (bool): Override an image file if it already exists and is about to be replaced
 
         """
@@ -725,7 +737,7 @@ class GLTF2(Property):
                 if image.uri:  # either already in a datauri format, or in a file
                     if not image.uri.startswith('data:'):  # not in data format, so assume a file name
                         # data is stored in a file, so load into data uri
-                        image_path = path / image.uri
+                        image_path = Path(path / image.uri)
                         if not image_path.exists():
                             warnings.warn(f"Expected image file at {image_path} not found.")
                             continue
@@ -757,8 +769,9 @@ class GLTF2(Property):
                 warnings.warn("pygltflib currently unable to add image data to buffers."
                               "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                 continue
-            elif image_format == ImageFormat.FILE:   # convert to images
-                file_name = self.export_image_to_file(image_index, override)
+            elif image_format == ImageFormat.FILE:  # convert to images
+                destination_path: Path = getattr(self, "_path", Path())
+                file_name = self.export_image_to_file(image_index, destination_path, override)
                 if file_name:  # replace data uri with pointer to file
                     image.uri = file_name
 

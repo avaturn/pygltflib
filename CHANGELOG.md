@@ -1,3 +1,10 @@
+* 1.14.0
+   * NOTE: Converting image.bufferView to image file now obeys "override" flag and also uses object path
+   * fix issue where image.bufferView with value '0' is interpreted as false (Dzmitry Stabrouski)
+   * fix issue where override flag ignored when converting image.bufferView to image file
+   * change image.bufferView export to image path handling to be same as image.uri export
+   * add longer example of mesh->bytes->mesh (Alexander Druz)
+
 * 1.13.10
    * NOTE: `GLTF2.load` now throws `FileNotFoundError` instead of failing silently on missing file.
    * fix issue where extensions with empty but valid dicts were not saving 

@@ -14,6 +14,7 @@ It supports the entire specification, including materials and animations. Main f
   * [Install](#install)
   * [How do I...](#how-do-i)
     * [Create an empty GLTF2 object?](#create-an-empty-gltf2-object)
+    * [Create a mesh](#create-a-mesh)
     * [Add a scene?](#add-a-scene)
     * [Load a file?](#load-a-file)
     * [Load a binary GLB file?](#load-a-binary-glb-file)
@@ -40,6 +41,7 @@ It supports the entire specification, including materials and animations. Main f
 * [More Detailed Usage](#more-detailed-usage)
   * [A simple mesh](#a-simple-mesh)
   * [Reading vertex data from a primitive and/or getting bounding sphere](#reading-vertex-data-from-a-primitive-andor-getting-bounding-sphere)
+  * [Create a mesh, convert to bytes, convert back to mesh](#create-a-mesh-convert-to-bytes-convert-back-to-mesh)
   * [Loading and saving](#loading-and-saving)
   * [Converting files](#converting-files)
   * [Converting buffers](#converting-buffers)
@@ -66,6 +68,12 @@ from pygltflib import GLTF2
 
 gltf = GLTF2()
 ```
+
+#### Create a mesh?
+Consult the longer examples in the second half of this document
+  * [A simple mesh](#a-simple-mesh)
+  * [Reading vertex data from a primitive and/or getting bounding sphere](#reading-vertex-data-from-a-primitive-andor-getting-bounding-sphere)
+  * [Create a mesh, convert to bytes, convert back to mesh](#create-a-mesh-convert-to-bytes-convert-back-to-mesh)
 
 #### Add a scene?
 
@@ -248,11 +256,19 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Patiphan Wongklaew
 * Alexander Druz
 * Adriano Martins
+* Dzmitry Stabrouski
 
 #### Thanks
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.0
+   * NOTE: Converting image.bufferView to image file now obeys "override" flag and also uses object path
+   * fix issue where image.bufferView with value '0' is interpreted as false (Dzmitry Stabrouski)
+   * fix issue where override flag ignored when converting image.bufferView to image file
+   * change image.bufferView export to image path handling to be same as image.uri export
+   * add longer example of mesh->bytes->mesh (Alexander Druz)
+
 * 1.13.10
    * NOTE: `GLTF2.load` now throws `FileNotFoundError` instead of failing silently on missing file.
    * fix issue where extensions with empty but valid dicts were not saving 
@@ -400,6 +416,192 @@ C, radius_squared = miniball.get_bounding_ball(S)
 
 # output the results
 print(f"center of bounding sphere: {C}\nradius squared of bounding sphere: {radius_squared}")
+```
+
+
+### Create a mesh, convert to bytes, convert back to mesh
+The geometry is derived from [glTF 2.0 Box Sample](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Box), but point normals were removed and points were reused where it was possible in order to reduce the size of the example. Be aware that some parts are hard-coded (types and shapes for en- and decoding of arrays, no bytes padding).
+```python
+import numpy as np
+import pygltflib
+```
+Define mesh using `numpy`:
+```python
+points = np.array(
+    [
+        [-0.5, -0.5, 0.5],
+        [0.5, -0.5, 0.5],
+        [-0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
+        [0.5, -0.5, -0.5],
+        [-0.5, -0.5, -0.5],
+        [0.5, 0.5, -0.5],
+        [-0.5, 0.5, -0.5],
+    ],
+    dtype="float32",
+)
+triangles = np.array(
+    [
+        [0, 1, 2],
+        [3, 2, 1],
+        [1, 0, 4],
+        [5, 4, 0],
+        [3, 1, 6],
+        [4, 6, 1],
+        [2, 3, 7],
+        [6, 7, 3],
+        [0, 2, 5],
+        [7, 5, 2],
+        [5, 7, 4],
+        [6, 4, 7],
+    ],
+    dtype="uint8",
+)
+```
+Create glb-style `GLTF2` with single scene, single node and single mesh from arrays of points and triangles:
+```python
+triangles_binary_blob = triangles.flatten().tobytes()
+points_binary_blob = points.tobytes()
+gltf = pygltflib.GLTF2(
+    scene=0,
+    scenes=[pygltflib.Scene(nodes=[0])],
+    nodes=[pygltflib.Node(mesh=0)],
+    meshes=[
+        pygltflib.Mesh(
+            primitives=[
+                pygltflib.Primitive(
+                    attributes=pygltflib.Attributes(POSITION=1), indices=0
+                )
+            ]
+        )
+    ],
+    accessors=[
+        pygltflib.Accessor(
+            bufferView=0,
+            componentType=pygltflib.UNSIGNED_BYTE,
+            count=triangles.size,
+            type=pygltflib.SCALAR,
+            max=[int(triangles.max())],
+            min=[int(triangles.min())],
+        ),
+        pygltflib.Accessor(
+            bufferView=1,
+            componentType=pygltflib.FLOAT,
+            count=len(points),
+            type=pygltflib.VEC3,
+            max=points.max(axis=0).tolist(),
+            min=points.min(axis=0).tolist(),
+        ),
+    ],
+    bufferViews=[
+        pygltflib.BufferView(
+            buffer=0,
+            byteLength=len(triangles_binary_blob),
+            target=pygltflib.ELEMENT_ARRAY_BUFFER,
+        ),
+        pygltflib.BufferView(
+            buffer=0,
+            byteOffset=len(triangles_binary_blob),
+            byteLength=len(points_binary_blob),
+            target=pygltflib.ARRAY_BUFFER,
+        ),
+    ],
+    buffers=[
+        pygltflib.Buffer(
+            byteLength=len(triangles_binary_blob) + len(points_binary_blob)
+        )
+    ],
+)
+gltf.set_binary_blob(triangles_binary_blob + points_binary_blob)
+```
+Write `GLTF2` to bytes:
+```python
+glb = b"".join(gltf.save_to_bytes())  # save_to_bytes returns an array of the components of a glb
+```
+Load `GLTF2` from bytes:
+```python
+gltf = pygltflib.GLTF2.load_from_bytes(glb)
+```
+Decode `numpy` arrays from `GLTF2`:
+```python
+binary_blob = gltf.binary_blob()
+
+triangles_accessor = gltf.accessors[gltf.meshes[0].primitives[0].indices]
+triangles_buffer_view = gltf.bufferViews[triangles_accessor.bufferView]
+triangles = np.frombuffer(
+    binary_blob[
+        triangles_buffer_view.byteOffset
+        + triangles_accessor.byteOffset : triangles_buffer_view.byteOffset
+        + triangles_buffer_view.byteLength
+    ],
+    dtype="uint8",
+    count=triangles_accessor.count,
+).reshape((-1, 3))
+
+points_accessor = gltf.accessors[gltf.meshes[0].primitives[0].attributes.POSITION]
+points_buffer_view = gltf.bufferViews[points_accessor.bufferView]
+points = np.frombuffer(
+    binary_blob[
+        points_buffer_view.byteOffset
+        + points_accessor.byteOffset : points_buffer_view.byteOffset
+        + points_buffer_view.byteLength
+    ],
+    dtype="float32",
+    count=points_accessor.count * 3,
+).reshape((-1, 3))
+```
+**P.S.**: If you'd like to use "compiled" version of mesh writing:
+```python
+gltf = pygltflib.GLTF2(
+    scene=0,
+    scenes=[pygltflib.Scene(nodes=[0])],
+    nodes=[pygltflib.Node(mesh=0)],
+    meshes=[
+        pygltflib.Mesh(
+            primitives=[
+                pygltflib.Primitive(
+                    attributes=pygltflib.Attributes(POSITION=1), indices=0
+                )
+            ]
+        )
+    ],
+    accessors=[
+        pygltflib.Accessor(
+            bufferView=0,
+            componentType=pygltflib.UNSIGNED_BYTE,
+            count=36,
+            type=pygltflib.SCALAR,
+            max=[7],
+            min=[0],
+        ),
+        pygltflib.Accessor(
+            bufferView=1,
+            componentType=pygltflib.FLOAT,
+            count=8,
+            type=pygltflib.VEC3,
+            max=[0.5, 0.5, 0.5],
+            min=[-0.5, -0.5, -0.5],
+        ),
+    ],
+    bufferViews=[
+        pygltflib.BufferView(
+            buffer=0, byteLength=36, target=pygltflib.ELEMENT_ARRAY_BUFFER
+        ),
+        pygltflib.BufferView(
+            buffer=0, byteOffset=36, byteLength=96, target=pygltflib.ARRAY_BUFFER
+        ),
+    ],
+    buffers=[pygltflib.Buffer(byteLength=132)],
+)
+gltf.set_binary_blob(
+    b"\x00\x01\x02\x03\x02\x01\x01\x00\x04\x05\x04\x00\x03\x01\x06\x04\x06\x01"
+    b"\x02\x03\x07\x06\x07\x03\x00\x02\x05\x07\x05\x02\x05\x07\x04\x06\x04\x07"
+    b"\x00\x00\x00\xbf\x00\x00\x00\xbf\x00\x00\x00?\x00\x00\x00?\x00\x00\x00"
+    b"\xbf\x00\x00\x00?\x00\x00\x00\xbf\x00\x00\x00?\x00\x00\x00?\x00\x00\x00?"
+    b"\x00\x00\x00?\x00\x00\x00?\x00\x00\x00?\x00\x00\x00\xbf\x00\x00\x00\xbf"
+    b"\x00\x00\x00\xbf\x00\x00\x00\xbf\x00\x00\x00\xbf\x00\x00\x00?\x00\x00"
+    b"\x00?\x00\x00\x00\xbf\x00\x00\x00\xbf\x00\x00\x00?\x00\x00\x00\xbf"
+)
 ```
 
 ### Loading and saving
