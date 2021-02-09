@@ -1,3 +1,6 @@
+* 1.14.1
+  * fix unicode error in setup.py (Andrew Stockton)
+
 * 1.14.0
    * NOTE: Converting image.bufferView to image file now obeys "override" flag and also uses object path
    * fix issue where image.bufferView with value '0' is interpreted as false (Dzmitry Stabrouski)

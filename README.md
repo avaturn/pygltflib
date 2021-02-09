@@ -279,6 +279,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.1
+  * fix unicode error in setup.py (Andrew Stockton)
+
 * 1.14.0
    * NOTE: Converting image.bufferView to image file now obeys "override" flag and also uses object path
    * fix issue where image.bufferView with value '0' is interpreted as false (Dzmitry Stabrouski)
