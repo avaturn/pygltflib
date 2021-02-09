@@ -672,7 +672,7 @@ class GLTF2(Property):
                 warnings.warn(f"Image {image_index} is already stored in a file {path / image.uri} but file"
                               f"does not appear to exist.")
             return None
-        elif image.bufferView:
+        elif image.bufferView is not None:
             # TODO: remove bufferView from GLTF when create images or datauris from buffer data
             bufferView = self.bufferViews[image.bufferView]
             buffer = self.buffers[bufferView.buffer]
@@ -736,7 +736,7 @@ class GLTF2(Property):
                             encoded_string = str(base64.b64encode(image_file.read()).decode('utf-8'))
                             image.name = copy.copy(image.uri) if not image.name else image.name
                             image.uri = f'data:{mime};base64,{encoded_string}'
-                elif image.bufferView:
+                elif image.bufferView is not None:
                     # TODO: remove bufferView from GLTF when create images or datauris from buffer data
                     warnings.warn("pygltflib currently does not remove image data "
                                   "from the buffer when converting to data uri."
@@ -751,7 +751,7 @@ class GLTF2(Property):
 
             elif image_format == ImageFormat.BUFFERVIEW:  # convert to buffer
                 #  load image data into the buffer and and add a bufferView
-                if image.bufferView:
+                if image.bufferView is not None:
                     # already in bufferview format
                     continue
                 warnings.warn("pygltflib currently unable to add image data to buffers."
