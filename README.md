@@ -279,6 +279,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.2
+  * improve mimetype handling (Gabriel Unmüßig)
+
 * 1.14.1
   * fix unicode error in setup.py (Andrew Stockton)
 

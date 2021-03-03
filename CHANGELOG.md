@@ -1,3 +1,6 @@
+* 1.14.2
+  * improve mimetype handling (Gabriel Unmüßig)
+
 * 1.14.1
   * fix unicode error in setup.py (Andrew Stockton)
 
