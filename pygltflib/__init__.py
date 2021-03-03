@@ -746,7 +746,7 @@ class GLTF2(Property):
                             warnings.warn(f"Expected image file at {image_path} not found.")
                             continue
                         mime: str
-                        mime, _ = mimetypes.guess_type(image_path)
+                        mime, _ = mimetypes.guess_type(str(image_path))
 
                         with open(image_path, "rb") as image_file:
                             encoded_string = str(base64.b64encode(image_file.read()).decode('utf-8'))
