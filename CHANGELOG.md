@@ -1,3 +1,7 @@
+* 1.14.3
+  * add ability to save data directly in the uri field to `save_to_bytes` (Israel)
+  * fix issue where attributes field is shared between two instances of Primitive (Konstantin Sinitsyn)
+
 * 1.14.2
   * improve mimetype handling (Gabriel Unmüßig)
 

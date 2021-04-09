@@ -97,7 +97,6 @@ class TestValidator:
         assert gltf.accessors[4].bufferView == 4
 
 
-
 class TestIO:
     def test_load_glb(self):
         r = Path(PATH) / "2.0/Box/glTF-Binary/Box.glb"
@@ -575,6 +574,23 @@ class TestDefaults:
     }
   ]
 }"""
+
+    def test_primitive_factory(self):
+        """ Make sure primitive attributes are made using a factory
+            https://gitlab.com/dodgyville/pygltflib/-/issues/43
+        """
+        p1 = Primitive()
+        assert p1.attributes.POSITION is None
+
+        p1.attributes.POSITION = 1
+        assert p1.attributes.POSITION == 1
+
+        p2 = Primitive()
+        assert p1.attributes.POSITION is 1
+
+        p2.attributes.POSITION = 2
+        assert p1.attributes.POSITION == 1
+
 
     def test_accessor(self):
         gltf = GLTF2()

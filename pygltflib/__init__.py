@@ -45,7 +45,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.14.2"
+__version__ = "1.14.3"
 
 """
 About the GLTF2 file format:
@@ -302,7 +302,7 @@ class Attributes:
 @dataclass_json
 @dataclass
 class Primitive(Property):
-    attributes: Attributes = Attributes()  # required
+    attributes: Attributes = field(default_factory=Attributes)  # required
     indices: Optional[int] = None
     mode: Optional[int] = TRIANGLES
     material: Optional[int] = None
@@ -918,10 +918,7 @@ class GLTF2(Property):
             if buffer.uri == '':  # assume loaded from glb binary file
                 data = self.binary_blob()
             elif buffer.uri.startswith("data"):
-                warnings.warn(f"Unable to save data uri bufferView {buffer.uri[:20]} to glb, "
-                              "please save in gltf format instead or use the convert_buffers method first."
-                              "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
-                return []
+                data = self.decode_data_uri(buffer.uri)
             elif Path(path, buffer.uri).is_file():
                 with open(Path(path, buffer.uri), 'rb') as fb:
                     data = fb.read()
