@@ -28,13 +28,15 @@ It supports the entire specification, including materials and animations. Main f
     * [Add a custom attribute to Attributes?](#add-a-custom-attribute-to-attributes)
     * [Remove a bufferView?](#remove-a-bufferview)
     * [Validate a gltf object?](#validate-a-gltf-object)
-    * [Export texture images from a GLTF file to their own PNG files?](#export-texture-images-from-a-gltf-file-to-their-own-png-files)
-    * [Export texture images from a GLTF file to their own PNG files using custom file names?](#export-texture-images-from-a-gltf-file-to-their-own-png-files-using-custom-file-names)
+    * [Convert texture images inside a GLTF file to their own PNG files?](#convert-texture-images-inside-a-gltf-file-to-their-own-png-files)
+    * [Convert texture images from a GLTF file to their own PNG files using custom file names?](#convert-texture-images-from-a-gltf-file-to-their-own-png-files-using-custom-file-names)
+    * [Specify a path to my images when converting to files?](#specify-a-path-to-my-images-when-converting-to-files)
+    * [Export images from the GLTF file to any location (ie outside the GLTF file)?](#export-images-from-the-GLTF-file-to-any-location-ie-outside-the-GLTF-file)
     * [Import PNG files as textures into a GLTF?](#import-png-files-as-textures-into-a-gltf)
 * [About](#about)
   * [Roadmap](#roadmap)
   * [Contributors](#contributors)
-  * [Thanks](#thanks)
+  * [Thanks](#thanks)1
   * [Changelog](#changelog)
   * [Installing](#installing)
   * [Source](#source)
@@ -63,7 +65,7 @@ pip install pygltflib
 
 #### Create an empty GLTF2 object?
 
-```python3
+```python
 from pygltflib import GLTF2
 
 gltf = GLTF2()
@@ -71,7 +73,7 @@ gltf = GLTF2()
 
 #### Add a scene?
 
-```python3
+```python
 from pygltflib import GLTF2, Scene
 
 gltf = GLTF2()
@@ -81,28 +83,28 @@ gltf.scenes.append(scene)  # scene available at gltf.scenes[0]
 
 #### Load a file?
 
-```python3
+```python
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 gltf = GLTF2().load(filename)
 ```
 
 #### Load a binary GLB file?
 
-```python3
+```python
 glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
 glb = GLTF2().load(glb_filename)  # load method auto detects based on extension
 ```
 
 #### Load a binary file with an unusual extension?
 
-```python3
+```python
 glb = GLTF2().load_binary("BinaryGLTF.glk")   # load_json and load_binary helper methods
 ```
 
 
 #### Access the first node (the objects comprising the scene) of a scene?
 
-```python3
+```python
 gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
 current_scene = gltf.scenes[gltf.scene]
 node_index = current_scene.nodes[0]  # scene.nodes is the indices, not the objects 
@@ -120,7 +122,7 @@ Consult the longer examples in the second half of this document
 
 #### Convert buffers to glb binary buffers?
 
-```python3
+```python
 from pygltflib import GLTF2, BufferFormat
 
 gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
@@ -128,19 +130,19 @@ gltf.convert_buffers(BufferFormat.BINARYBLOB)   # convert buffers to GLB blob
 ```
 
 #### Convert buffer to data uri (embedded) buffer?
-```python3
+```python
 gltf.convert_buffers(BufferFormat.DATAURI)  # convert buffer URIs to data.
 ```
 
 #### Convert buffers to binary file (external) buffers?
-```python3
+```python
 gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
 gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
 ```
 
 
 #### Convert a glb to a gltf file?
-```python3
+```python
 from pygltflib.utils import glb2gltf, gltf2glb
 
 # convert glb to gltf
@@ -148,7 +150,7 @@ glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
 ```
 
 #### Access an extension?
-```python3
+```python
 # on a primitve
 gltf.meshes[0].primitives[0].extensions['KHR_draco_mesh_compression']
 
@@ -158,7 +160,7 @@ gltf.materials[0].extensions['ADOBE_materials_thin_transparency']
 ```
 
 #### Add a custom attribute to Attributes?
-```python3
+```python
 # Application-specific semantics must start with an underscore, e.g., _TEMPERATURE.
 a = Attributes()
 a._MYCUSTOMATTRIBUTE = 123
@@ -167,12 +169,12 @@ gltf.meshes[0].primitives[0].attributes._MYOTHERATTRIBUTE = 456
 ```
 
 #### Remove a bufferView?
-```python3
+```python
 gltf.remove_bufferView(0)  # this will update all accessors, images and sparse accessors to remove the first bufferView
 ```
 
 #### Validate a gltf object?
-```python3
+```python
 from pygltflib import GLTF2
 from pygltflib.validator import validate, summary
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
@@ -182,8 +184,8 @@ summary(gltf)  # will pretty print human readable summary of errors
 # NOTE: Currently this experimental validator only validates a few rules about GLTF2 objects
 ```
 
-#### Export texture images from a GLTF file to their own PNG files?
-```python3
+#### Convert texture images inside a GLTF file to their own PNG files?
+```python
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
@@ -192,8 +194,8 @@ gltf.convert_images(ImageFormat.FILE)
 gltf.images[0].uri  # will now be 0.png and the texture image will be saved in 0.png
 ```
 
-#### Export texture images from a GLTF file to their own PNG files using custom file names?
-```python3
+#### Convert texture images from a GLTF file to their own PNG files using custom file names?
+```python
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
@@ -208,8 +210,8 @@ By default pygltflib will load images from the same location as the GLTF file.
 
 It will also try and save image files to the that location when converting image buffers or data uris.
 
-You can override the destination using the 'path' argument to `convert_images`
-```python3
+You can override the load/save location using the 'path' argument to `convert_images`
+```python
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat
 filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
@@ -219,9 +221,18 @@ gltf.convert_images(ImageFormat.FILE, path='/destination/')
 gltf.images[0].uri  # will now be cube.png and the texture image will be saved in /destination/cube.png
 ```
 
+#### Export images from the GLTF file to any location (ie outside the GLTF file)?
+```python
+from pygltflib import GLTF2
+from pygltflib.utils import ImageFormat
+filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
+gltf = GLTF2().load(filename)
+gltf.export_image(0, "output/cube.png", override=True)  # There is now an image file at output/cube.png
+```
+
 
 #### Import PNG files as textures into a GLTF?
-```python3
+```python
 from pygltflib import GLTF2
 from pygltflib.utils import ImageFormat, Image
 gltf = GLTF2()
@@ -279,6 +290,10 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.4
+  * Add `GLTF.export_image` method to export images from an GLTF2 file to any location (Khac Hoa Le)
+  * remove extraneous print message when loading extensions (Michael Daw)
+
 * 1.14.3
   * add ability to save data directly in the uri field to `save_to_bytes` (Israel)
   * fix issue where attributes field is shared between two instances of Primitive (Konstantin Sinitsyn)
@@ -329,7 +344,7 @@ Note: These examples use the official [sample models](https://github.com/Khronos
 https://github.com/KhronosGroup/glTF-Sample-Models
 
 ### A simple mesh
-```python3
+```python
 from pygltflib import *
 
 # create gltf objects for a scene with a primitive triangle with indexed geometry
@@ -395,7 +410,7 @@ gltf.save("triangle.gltf")
 
 
 ### Reading vertex data from a primitive and/or getting bounding sphere
-```python3 
+```python
 import pathlib
 import struct
 
@@ -630,7 +645,7 @@ gltf.set_binary_blob(
 
 #### GLTF files
 
-```python3
+```python
 >>> from pygltflib import GLTF2
 >>> filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 >>> gltf = GLTF2().load(filename)
@@ -654,7 +669,7 @@ Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
 
 #### GLB files 
 
-```python3
+```python
 >>> from pygltflib import GLTF2
 >>> glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
 >>> glb = GLTF2().load(glb_filename)
@@ -680,7 +695,7 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 #### First method
 
-```python3
+```python
 >>> from pygltflib import GLTF2
 
 >>> # convert glb to gltf
@@ -694,7 +709,7 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 
 #### Second method using utils
 
-```python3
+```python
 >>> from pygltflib import GLTF2
 >>> from pygltflib.utils import glb2gltf, gltf2glb
 
@@ -720,7 +735,7 @@ to data uris or glb binary data.
 
 There is a convenience method named `convert_buffers` that can help.
 
-```python3
+```python
 >>> from pygltflib import GLTF2, BufferFormat
 
 >>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
@@ -751,7 +766,7 @@ files and data uris are supported.
 
 There is a convenience method named `convert_images` that can help.  
 
-```python3
+```python
 
 >>> # embed an image file to your GLTF.
 

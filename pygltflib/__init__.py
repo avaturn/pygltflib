@@ -35,6 +35,7 @@ from enum import Enum
 import json
 import mimetypes
 from pathlib import Path
+from shutil import copyfile
 from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
 import struct
@@ -45,7 +46,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.14.3"
+__version__ = "1.14.4"
 
 """
 About the GLTF2 file format:
@@ -195,8 +196,6 @@ def delete_empty_keys(dictionary):
     https://stackoverflow.com/questions/4255400/exclude-empty-null-values-from-json-serialization
     """
     for key, value in list(dictionary.items()):
-        if "extensions" in key and len(value) > 0:
-            print("extensions?")
         if value is None or (hasattr(value, '__iter__') and len(value) == 0):
             del dictionary[key]
         elif isinstance(value, dict) and key != "extensions":
@@ -665,10 +664,68 @@ class GLTF2(Property):
 
         return bufferView
 
+
+    def export_datauri_as_image_file(self, data_uri, name, destination, override=False, index=0):
+        """ convert data uri to image file
+            If destination is full path and file name, use that.
+            If destination is just a directory, use the name of the data_uri
+        """
+        header, encoded = data_uri.split(",", 1)
+        mime = header.split(":")[1].split(";")[0]
+        if name:  # use image.name
+            file_name = name
+        else:
+            extension = mimetypes.guess_extension(mime)
+            file_name = f"{index}{extension}"
+        destination = Path(destination)
+        if destination.is_dir():
+            image_path = destination / file_name
+        else:  # assume filepath
+            image_path = destination
+        if image_path.is_file() and not override:
+            warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
+            return None
+        data = base64.b64decode(encoded)
+
+        with open(image_path, "wb") as image_file:
+            image_file.write(data)
+        return file_name
+
+    def export_fileuri_as_image_file(self, file_uri, destination, override=False):
+        """ Export file uri as another image file (ie copy out of GLTF into own location) """
+        path = getattr(self, "_path", Path())
+        image_path = Path(path / file_uri)
+        if not image_path.exists():
+            warnings.warn(f"Unable to find image {image_path} for export.")
+            return None
+        if image_path.is_file() and not override:
+            warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
+            return None
+
+        copyfile(image_path, destination)
+        return file_uri
+
+    def export_image(self, image_index, destination='', override=False):
+        """ Directly export an image to a file without affecting GLTF """
+        destination = Path(destination)
+        image = self.images[image_index]
+        if image.uri and not image.uri.startswith('data:'):  # copy file to new location
+            self.export_fileuri_as_image_file(image.uri, destination)
+        elif image.bufferView is not None:
+            warnings.warn("pygltflib.export_image currently unable to convert image stored buffers to image file. "
+                          "Try GLTF.convert_images() first. "
+                          "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
+
+        elif image.uri.startswith('data:'):
+            file_name = self.export_datauri_as_image_file(image.uri, image.name, destination, override, image_index)
+            return file_name
+
     def export_image_to_file(self, image_index, destination_path='', override=False):
         """
+        Used primarly by convert_images. To export images consider using GLTF2.export_image
+
         image_index (int): Image index
-        destination_path (str|Path): Path where to save images
+        destination_path (str|Path): Path where to save images. Images will also be loaded from this path if needed.
         override (bool): Only save image if it does not already exist
         """
         destination_path = Path(destination_path)
@@ -703,22 +760,7 @@ class GLTF2(Property):
                 return file_name
             return None
         elif image.uri.startswith('data:'):
-            #  convert data uri to image file
-            header, encoded = image.uri.split(",", 1)
-            mime = header.split(":")[1].split(";")[0]
-            if image.name:  # use image.name
-                file_name = image.name
-            else:
-                extension = mimetypes.guess_extension(mime)
-                file_name = f"{image_index}{extension}"
-            image_path = destination_path / file_name
-            if image_path.is_file() and not override:
-                warnings.warn(f"Unable to write image file, a file already exists at {image_path}")
-                return None
-            data = base64.b64decode(encoded)
-
-            with open(image_path, "wb") as image_file:
-                image_file.write(data)
+            file_name = self.export_datauri_as_image_file(image.uri, image.name, destination_path, override, image_index)
             return file_name
 
     def convert_images(self, image_format, path=None, override=False):

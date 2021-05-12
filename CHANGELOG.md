@@ -1,3 +1,7 @@
+* 1.14.4
+  * Add `GLTF.export_image` method to export images from an GLTF2 file to any location (Khac Hoa Le)
+  * remove extraneous print message when loading extensions (Michael Daw)
+
 * 1.14.3
   * add ability to save data directly in the uri field to `save_to_bytes` (Israel)
   * fix issue where attributes field is shared between two instances of Primitive (Konstantin Sinitsyn)
