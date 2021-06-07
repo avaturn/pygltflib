@@ -108,7 +108,7 @@ glb = GLTF2().load_binary("BinaryGLTF.glk")   # load_json and load_binary helper
 gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
 current_scene = gltf.scenes[gltf.scene]
 node_index = current_scene.nodes[0]  # scene.nodes is the indices, not the objects 
-box = gltf.nodes[nodex_index]
+box = gltf.nodes[node_index]
 box.matrix  # will output vertices for the box object
 ```
 
