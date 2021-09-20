@@ -1,3 +1,6 @@
+* 1.14.5
+  * unquote filepath in compliance with standard (irtimir)
+
 * 1.14.4
   * Add `GLTF.export_image` method to export images from an GLTF2 file to any location (Khac Hoa Le)
   * remove extraneous print message when loading extensions (Michael Daw)

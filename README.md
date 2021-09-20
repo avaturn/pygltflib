@@ -285,11 +285,15 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Alexander Druz
 * Adriano Martins
 * Dzmitry Stabrouski
+* irtimir
 
 #### Thanks
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.5
+  * unquote filepath in compliance with standard (irtimir)
+
 * 1.14.4
   * Add `GLTF.export_image` method to export images from an GLTF2 file to any location (Khac Hoa Le)
   * remove extraneous print message when loading extensions (Michael Daw)
@@ -297,27 +301,6 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * 1.14.3
   * add ability to save data directly in the uri field to `save_to_bytes` (Israel)
   * fix issue where attributes field is shared between two instances of Primitive (Konstantin Sinitsyn)
-
-* 1.14.2
-  * improve mimetype handling (Gabriel Unmüßig)
-
-* 1.14.1
-  * fix unicode error in setup.py (Andrew Stockton)
-
-* 1.14.0
-   * NOTE: Converting image.bufferView to image file now obeys "override" flag and also uses object path
-   * fix issue where image.bufferView with value '0' is interpreted as false (Dzmitry Stabrouski)
-   * fix issue where override flag ignored when converting image.bufferView to image file
-   * change image.bufferView export to image path handling to be same as image.uri export
-   * add longer example of mesh->bytes->mesh (Alexander Druz)
-
-* 1.13.10
-   * NOTE: `GLTF2.load` now throws `FileNotFoundError` instead of failing silently on missing file.
-   * fix issue where extensions with empty but valid dicts were not saving 
-   * add `GLTF2.set_binary_blob` for improved access of binary data
-   * split `GLTF2.save_binary` into two methods
-     * GLTF2.save_binary - functions the same way as the original method
-     * GLTF2.save_to_bytes - returns an array containing a binary GLTF file in an array structure 
 
 See [CHANGELOG.md] (https://gitlab.com/dodgyville/pygltflib/-/blob/master/CHANGELOG.md) for older versions
 
