@@ -38,6 +38,7 @@ from pathlib import Path
 from shutil import copyfile
 from typing import Any, Dict, List
 from typing import Callable, Optional, Tuple, TypeVar, Union
+from urllib.parse import unquote
 import struct
 import warnings
 
@@ -664,7 +665,6 @@ class GLTF2(Property):
 
         return bufferView
 
-
     def export_datauri_as_image_file(self, data_uri, name, destination, override=False, index=0):
         """ convert data uri to image file
             If destination is full path and file name, use that.
@@ -679,7 +679,7 @@ class GLTF2(Property):
             file_name = f"{index}{extension}"
         destination = Path(destination)
         if destination.is_dir():
-            image_path = destination / file_name
+            image_path = destination / unquote(file_name)
         else:  # assume filepath
             image_path = destination
         if image_path.is_file() and not override:
@@ -694,7 +694,7 @@ class GLTF2(Property):
     def export_fileuri_as_image_file(self, file_uri, destination, override=False):
         """ Export file uri as another image file (ie copy out of GLTF into own location) """
         path = getattr(self, "_path", Path())
-        image_path = Path(path / file_uri)
+        image_path = Path(path / unquote(file_uri))
         if not image_path.exists():
             warnings.warn(f"Unable to find image {image_path} for export.")
             return None
@@ -732,8 +732,9 @@ class GLTF2(Property):
         image = self.images[image_index]
         if image.uri and not image.uri.startswith('data:'):
             # already in file format
-            if not (destination_path / image.uri).exists():
-                warnings.warn(f"Image {image_index} is already stored in a file {destination_path / image.uri} but file"
+            image_path = destination_path / unquote(image.uri)
+            if not image_path.exists():
+                warnings.warn(f"Image {image_index} is already stored in a file {image_path} but file "
                               f"does not appear to exist.")
             return None
         elif image.bufferView is not None:
@@ -760,7 +761,13 @@ class GLTF2(Property):
                 return file_name
             return None
         elif image.uri.startswith('data:'):
-            file_name = self.export_datauri_as_image_file(image.uri, image.name, destination_path, override, image_index)
+            file_name = self.export_datauri_as_image_file(
+                image.uri,
+                image.name,
+                destination_path,
+                override,
+                image_index,
+            )
             return file_name
 
     def convert_images(self, image_format, path=None, override=False):
@@ -783,7 +790,7 @@ class GLTF2(Property):
                 if image.uri:  # either already in a datauri format, or in a file
                     if not image.uri.startswith('data:'):  # not in data format, so assume a file name
                         # data is stored in a file, so load into data uri
-                        image_path = Path(path / image.uri)
+                        image_path = Path(path / unquote(image.uri))
                         if not image_path.exists():
                             warnings.warn(f"Expected image file at {image_path} not found.")
                             continue

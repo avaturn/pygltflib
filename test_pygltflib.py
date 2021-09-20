@@ -876,7 +876,7 @@ class TestConvertImages:
         glb = GLTF2().load(fname)
         with tempfile.TemporaryDirectory() as tmpdirname:
             fname = glb.export_image_to_file(0, tmpdirname, True)
-            assert Path(fname).exists()
+            assert (Path(tmpdirname) / fname).exists()
 
 
 class TestExamples:

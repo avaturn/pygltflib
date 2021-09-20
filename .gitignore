@@ -2,6 +2,7 @@
 __pycache__
 
 # Ignoreing virtual environment, editor, egg files
+.python-version
 .venv
 .vscode
 *.egg-info
