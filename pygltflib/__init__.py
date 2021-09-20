@@ -47,7 +47,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.14.4"
+__version__ = "1.14.5"
 
 """
 About the GLTF2 file format:
