@@ -879,6 +879,43 @@ class TestConvertImages:
             assert (Path(tmpdirname) / fname).exists()
 
 
+class TestBytesBuffer:
+    def test_buffer_blob_padding_underrun(self):
+        pass
+        """
+        buffer_blob += data[byte_offset:byte_offset + byte_length]
+        The problem is that byte_offset + byte_length is clamped to the actual size of data, so no padding is copied if data is at the end and buffer_blob is smaller than required.
+        Maybe it is further a good idea to explicitly use zeroes for padding instead of reading any unspecified data from data.
+        """
+        # filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
+        # gltf = GLTF2().load(filename)
+        # buffer_blob = gltf.buffers_to_binary_blob()
+
+        # assert buffer_blob == gltf._glb_data
+
+    def test_buffer_view_byte_length(self):
+        #  it is better to use the unpadded size as length for the buffer view:
+        # https://gitlab.com/dodgyville/pygltflib/-/blob/87ec1eb2ee44e69c14c41114b69485bbc180005b/pygltflib/__init__.py#L986
+        #buffers_to_binary_blob
+        pass
+
+class TestJSON:
+    def test_compact(self):
+        gltf = GLTF2()
+        output = gltf.gltf_to_json(separators=(',', ':'), indent=None)
+        assert output == '{"asset":{"generator":"pygltflib@v1.14.6","version":"2.0"}}'
+
+    def test__default(self):
+        gltf = GLTF2()
+        output = gltf.gltf_to_json()
+        print(output)
+        assert output == """{
+  "asset": {
+    "generator": "pygltflib@v1.14.6",
+    "version": "2.0"
+  }
+}"""
+
 class TestExamples:
     def test_a_simple_mesh(self):
         # create gltf objects for a scene with a primitive triangle with indexed geometry
@@ -941,4 +978,5 @@ class TestExamples:
         # save to file
         with tempfile.TemporaryDirectory() as tmpdirname:
             gltf.save("triangle.gltf")
+
 

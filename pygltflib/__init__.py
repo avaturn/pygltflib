@@ -47,7 +47,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.14.5"
+__version__ = "1.14.6"
 
 """
 About the GLTF2 file format:
@@ -930,8 +930,8 @@ class GLTF2(Property):
                     primitive.attributes = attributes
         return result
 
-    def gltf_to_json(self) -> str:
-        return self.to_json(default=json_serial, indent="  ", allow_nan=False, skipkeys=True)
+    def gltf_to_json(self, separators=None, indent="  ") -> str:
+        return self.to_json(default=json_serial, indent=indent, allow_nan=False, skipkeys=True, separators=separators)
 
     def save_json(self, fname):
         path = Path(fname)
@@ -953,14 +953,11 @@ class GLTF2(Property):
         self.buffers = original_buffers  # restore buffers
         return True
 
-    def save_to_bytes(self):
-        # setup
+    def buffers_to_binary_blob(self):
+        """ Flatten all buffers into a single buffer """
         buffer_blob = b''
-        original_buffer_views = copy.deepcopy(self.bufferViews)
-        original_buffers = copy.deepcopy(self.buffers)
 
         offset = 0
-        new_buffer = Buffer()
         path = getattr(self, "_path", Path())
         for i, bufferView in enumerate(self.bufferViews):
             buffer = self.buffers[bufferView.buffer]
@@ -987,10 +984,19 @@ class GLTF2(Property):
             bufferView.buffer = 0
             offset += byte_length
 
-        new_buffer.byteLength = len(buffer_blob)
-        self.buffers = [new_buffer]
+        return buffer_blob
 
-        json_blob = self.gltf_to_json().encode("utf-8")
+    def save_to_bytes(self):
+        # setup
+        original_buffer_views = copy.deepcopy(self.bufferViews)
+        original_buffers = copy.deepcopy(self.buffers)
+        new_buffer = Buffer()
+
+        buffer_blob = self.buffers_to_binary_blob()
+        new_buffer.byteLength = len(buffer_blob)
+
+        self.buffers = [new_buffer]
+        json_blob = self.gltf_to_json(separators=(',', ':'), indent=None).encode("utf-8")
 
         # pad each blob if needed
         if len(json_blob) % 4 != 0:
@@ -999,6 +1005,7 @@ class GLTF2(Property):
         version = struct.pack('<I', GLTF_VERSION)
         chunk_header_len = 8
         length = len(MAGIC) + len(version) + 4 + chunk_header_len * 2 + len(json_blob) + len(buffer_blob)
+
         self.bufferViews = original_buffer_views  # restore unpacked bufferViews
         self.buffers = original_buffers  # restore unpacked buffers
 
