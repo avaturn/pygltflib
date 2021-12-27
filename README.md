@@ -291,6 +291,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.7
+  * add `GLTF.get_data_from_buffer_uri` helper method to simplify access to buffer data (see bounding box example in README.md) (el_flamenco)
+
 * 1.14.6
   * use compact json when saving binary glb files (Laubeee)
 
@@ -300,10 +303,6 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * 1.14.4
   * Add `GLTF.export_image` method to export images from an GLTF2 file to any location (Khac Hoa Le)
   * remove extraneous print message when loading extensions (Michael Daw)
-
-* 1.14.3
-  * add ability to save data directly in the uri field to `save_to_bytes` (Israel)
-  * fix issue where attributes field is shared between two instances of Primitive (Konstantin Sinitsyn)
 
 See [CHANGELOG.md] (https://gitlab.com/dodgyville/pygltflib/-/blob/master/CHANGELOG.md) for older versions
 
@@ -418,7 +417,7 @@ for primitive in mesh.primitives:
     accessor = gltf.accessors[primitive.attributes.POSITION]
     bufferView = gltf.bufferViews[accessor.bufferView]
     buffer = gltf.buffers[bufferView.buffer]
-    data = gltf.decode_data_uri(buffer.uri)
+    data = gltf.get_data_from_buffer_uri(buffer.uri)
 
     # pull each vertex from the binary buffer and convert it into a tuple of python floats
     vertices = []

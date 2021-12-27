@@ -47,7 +47,7 @@ from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
 from deprecated import deprecated
 
-__version__ = "1.14.6"
+__version__ = "1.14.7"
 
 """
 About the GLTF2 file format:
@@ -637,6 +637,25 @@ class GLTF2(Property):
                           "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
         return uri_format
 
+    def get_data_from_buffer_uri(self, uri):
+        """
+        No matter how the buffer data is stored (the uri may be a long string, a file name or imply
+        a binary blob), strip off any headers and do any conversions are return a universal binary
+        blob for manipulation.
+        """
+        current_buffer_format = self.identify_uri(uri)
+
+        if current_buffer_format == BufferFormat.BINFILE:
+            data = self.load_file_uri(uri)
+        elif current_buffer_format == BufferFormat.DATAURI:
+            data = self.decode_data_uri(uri)
+        elif current_buffer_format == BufferFormat.BINARYBLOB:
+            data = self.binary_blob()
+        else:
+            return None
+
+        return data
+
     # noinspection PyPep8Naming
     def remove_bufferView(self, buffer_view_id):
         """
@@ -841,15 +860,11 @@ class GLTF2(Property):
             current_buffer_format = self.identify_uri(buffer.uri)
             if current_buffer_format == buffer_format:  # already in the format
                 continue
-
             if current_buffer_format == BufferFormat.BINFILE:
                 warnings.warn(f"Conversion will leave {buffer.uri} file orphaned since data is now in the GLTF object.")
-                data = self.load_file_uri(buffer.uri)
-            elif current_buffer_format == BufferFormat.DATAURI:
-                data = self.decode_data_uri(buffer.uri)
-            elif current_buffer_format == BufferFormat.BINARYBLOB:
-                data = self.binary_blob()
-            else:
+            data = self.get_data_from_buffer_uri(buffer.uri)
+
+            if not data:
                 return
 
             self.destroy_binary_blob()  # free up any binary blob floating around
@@ -862,7 +877,7 @@ class GLTF2(Property):
                 self.set_binary_blob(data)
                 buffer.uri = ''
             elif buffer_format == BufferFormat.DATAURI:
-                # convert buffer
+                # convert buffer to a data uri
                 data = base64.b64encode(data).decode('utf-8')
                 buffer.uri = f'{DATA_URI_HEADER}{data}'
             elif buffer_format == BufferFormat.BINFILE:

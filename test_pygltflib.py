@@ -529,9 +529,9 @@ class TestTextureConvert:
         pass
 
 
-def gltf_to_json(gltf: GLTF2):
+def gltf_to_json(gltf: GLTF2, separators=None, indent="  "):
     gltf.asset.generator = 'test'
-    return gltf.gltf_to_json()
+    return gltf.gltf_to_json(separators=separators, indent=indent)
 
 
 class TestDefaults:
@@ -899,18 +899,19 @@ class TestBytesBuffer:
         #buffers_to_binary_blob
         pass
 
+
 class TestJSON:
     def test_compact(self):
         gltf = GLTF2()
-        output = gltf.gltf_to_json(separators=(',', ':'), indent=None)
-        assert output == '{"asset":{"generator":"pygltflib@v1.14.6","version":"2.0"}}'
+        output = gltf_to_json(gltf, separators=(',', ':'), indent=None)
+        assert output == '{"asset":{"generator":"test","version":"2.0"}}'
 
     def test__default(self):
         gltf = GLTF2()
-        output = gltf.gltf_to_json()
+        output = gltf_to_json(gltf)
         assert output == """{
   "asset": {
-    "generator": "pygltflib@v1.14.6",
+    "generator": "test",
     "version": "2.0"
   }
 }"""

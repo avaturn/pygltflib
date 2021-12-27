@@ -1,3 +1,6 @@
+* 1.14.7
+  * add `GLTF.get_data_from_buffer_uri` helper method to simplify access to buffer data (see bounding box example in README.md) (el_flamenco)
+
 * 1.14.6
   * use compact json when save binary glb files (Laubeee)
 
