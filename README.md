@@ -291,6 +291,9 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.14.6
+  * use compact json when saving binary glb files (Laubeee)
+
 * 1.14.5
   * unquote filepath in compliance with standard (irtimir)
 

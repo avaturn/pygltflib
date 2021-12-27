@@ -908,7 +908,6 @@ class TestJSON:
     def test__default(self):
         gltf = GLTF2()
         output = gltf.gltf_to_json()
-        print(output)
         assert output == """{
   "asset": {
     "generator": "pygltflib@v1.14.6",

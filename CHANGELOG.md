@@ -1,3 +1,6 @@
+* 1.14.6
+  * use compact json when save binary glb files (Laubeee)
+
 * 1.14.5
   * unquote filepath in compliance with standard (irtimir)
 
