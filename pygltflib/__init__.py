@@ -970,14 +970,18 @@ class GLTF2(Property):
 
     def buffers_to_binary_blob(self):
         """ Flatten all buffers into a single buffer """
-        buffer_blob = b''
+        buffer_blob = bytearray()
 
         offset = 0
         path = getattr(self, "_path", Path())
+        binary_blob: Optional[bytearray] = None
+
         for i, bufferView in enumerate(self.bufferViews):
             buffer = self.buffers[bufferView.buffer]
             if buffer.uri == '':  # assume loaded from glb binary file
-                data = self.binary_blob()
+                if binary_blob is None:
+                    binary_blob = self.binary_blob()
+                data = binary_blob
             elif buffer.uri.startswith("data"):
                 data = self.decode_data_uri(buffer.uri)
             elif Path(path, buffer.uri).is_file():
