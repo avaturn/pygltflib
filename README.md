@@ -221,6 +221,7 @@ gltf.convert_images(ImageFormat.FILE, path='/destination/')
 gltf.images[0].uri  # will now be cube.png and the texture image will be saved in /destination/cube.png
 ```
 
+
 #### Export images from the GLTF file to any location (ie outside the GLTF file)?
 ```python
 from pygltflib import GLTF2
@@ -286,11 +287,16 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 * Adriano Martins
 * Dzmitry Stabrouski
 * irtimir
+* Florian Bruggisser
 
 #### Thanks
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.15.0: 
+  * Significantly improved save_to_bytes performance (20x faster) (Florian Bruggisser)
+    * NOTE: Underlying binary blob is now mutable instead of immutable. 
+
 * 1.14.7
   * add `GLTF.get_data_from_buffer_uri` helper method to simplify access to buffer data (see bounding box example in README.md) (el_flamenco)
 
@@ -630,7 +636,7 @@ gltf.set_binary_blob(
 
 #### GLTF files
 
-```python
+```
 >>> from pygltflib import GLTF2
 >>> filename = "glTF-Sample-Models/2.0/AnimatedCube/glTF/AnimatedCube.gltf"
 >>> gltf = GLTF2().load(filename)
@@ -654,7 +660,7 @@ Attributes(NORMAL=4, POSITION=None, TANGENT=5, TEXCOORD_0=6)
 
 #### GLB files 
 
-```python
+```
 >>> from pygltflib import GLTF2
 >>> glb_filename = "glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb"
 >>> glb = GLTF2().load(glb_filename)
@@ -681,28 +687,28 @@ Attributes(POSITION=2, NORMAL=1, TANGENT=None, TEXCOORD_0=None, TEXCOORD_1=None,
 #### First method
 
 ```python
->>> from pygltflib import GLTF2
+from pygltflib import GLTF2
 
->>> # convert glb to gltf
->>> glb = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
->>> glb.save("test.gltf")
+# convert glb to gltf
+glb = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
+glb.save("test.gltf")
 
->>> # convert gltf to glb
->>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
->>> gltf.save("test.glb")
+# convert gltf to glb
+gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+gltf.save("test.glb")
 ```
 
 #### Second method using utils
 
 ```python
->>> from pygltflib import GLTF2
->>> from pygltflib.utils import glb2gltf, gltf2glb
+from pygltflib import GLTF2
+from pygltflib.utils import glb2gltf, gltf2glb
 
->>> # convert glb to gltf
->>> glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
+# convert glb to gltf
+glb2gltf("glTF-Sample-Models/2.0/Box/glTF-Binary/Box.glb")
 
->>> # convert gltf to glb
->>> gltf2glb("glTF-Sample-Models/2.0/Box/glTF/Box.gltf", "test.glb", override=True)
+# convert gltf to glb
+gltf2glb("glTF-Sample-Models/2.0/Box/glTF/Box.gltf", "test.glb", override=True)
 
 ```
 
@@ -721,18 +727,18 @@ to data uris or glb binary data.
 There is a convenience method named `convert_buffers` that can help.
 
 ```python
->>> from pygltflib import GLTF2, BufferFormat
+from pygltflib import GLTF2, BufferFormat
 
->>> gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
->>> gltf.convert_buffers(BufferFormat.DATAURI)  # convert buffer URIs to data.
->>> gltf.save_binary("test.glb")  # try and save, will get warning.
-Warning: Unable to save data uri to glb format.
+gltf = GLTF2().load("glTF-Sample-Models/2.0/Box/glTF/Box.gltf")
+gltf.convert_buffers(BufferFormat.DATAURI)  # convert buffer URIs to data.
+gltf.save_binary("test.glb")  # try and save, will get warning.
+# Will receive: Warning: Unable to save data uri to glb format.
 
->>> gltf.convert_buffers(BufferFormat.BINARYBLOB)   # convert buffers to GLB blob
->>> gltf.save_binary("test.glb")
+gltf.convert_buffers(BufferFormat.BINARYBLOB)   # convert buffers to GLB blob
+gltf.save_binary("test.glb")
 
->>> gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
->>> gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
+gltf.convert_buffers(BufferFormat.BINFILE)   # convert buffers to files
+gltf.save("test.gltf")  # all the buffers are saved in 0.bin, 1.bin, 2.bin.
 ```
 
 ### Converting texture images
@@ -753,35 +759,35 @@ There is a convenience method named `convert_images` that can help.
 
 ```python
 
->>> # embed an image file to your GLTF.
+# embed an image file to your GLTF.
 
->>> from pygltflib.utils import ImageFormat, Image
->>> gltf = GLTF2()
->>> image = Image()
->>> image.uri = "myfile.png"
->>> gltf.images.append(image)
+from pygltflib.utils import ImageFormat, Image
+gltf = GLTF2()
+image = Image()
+image.uri = "myfile.png"
+gltf.images.append(image)
 
->>> gltf.convert_images(ImageFormat.DATAURI)  # image file will be imported into the GLTF
->>> gltf.images[0].uri  # will now be something like "data:image/png;base64,iVBORw0KGg..."
->>> gltf.images[0].name  # will be myfile.png
+gltf.convert_images(ImageFormat.DATAURI)  # image file will be imported into the GLTF
+gltf.images[0].uri  # will now be something like "data:image/png;base64,iVBORw0KGg..."
+gltf.images[0].name  # will be myfile.png
 
+```
 
->>> # create an image file from GLTF data uris
+```python
+# create an image file from GLTF data uris
 
->>> from pathlib import Path
->>> from pygltflib.utils import ImageFormat, Image
->>> gltf = GLTF2()
->>> image = Image()
->>> image.uri = "data:image/png;base64,iVBORw0KGg..."
->>> image.name = "myfile.png"  # optional file name, if not provided, the image files will be called "0.png", "1.png"
->>> gltf.images.append(image)
+from pathlib import Path
+from pygltflib.utils import ImageFormat, Image
+gltf = GLTF2()
+image = Image()
+image.uri = "data:image/png;base64,iVBORw0KGg..."
+image.name = "myfile.png"  # optional file name, if not provided, the image files will be called "0.png", "1.png"
+gltf.images.append(image)
 
->>> gltf.convert_images(ImageFormat.FILE)  # image file will be imported into the GLTF
->>> gltf.images[0].uri  # will be myfile.png
-"myfile.png"
+gltf.convert_images(ImageFormat.FILE)  # image file will be imported into the GLTF
+gltf.images[0].uri  # will be myfile.png
 
->>> Path("myfile.png").exists()
-True
+assert Path("myfile.png").exists() is True
 ```
 
 

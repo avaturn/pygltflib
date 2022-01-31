@@ -43,6 +43,12 @@ def add_node(gltf, node):
     return gltf
 
 
+def find_node_index_by_name(gltf: GLTF2, name):
+    for index, node in enumerate(gltf.nodes):
+        if node.name == name:
+            return index
+    return -1
+
 def add_default_camera(gltf):
     warnings.warn("pygltf.utils.add_default_camera is a provisional function and may not exist in future versions.")
     n = Node()
