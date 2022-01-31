@@ -36,7 +36,7 @@ It supports the entire specification, including materials and animations. Main f
 * [About](#about)
   * [Roadmap](#roadmap)
   * [Contributors](#contributors)
-  * [Thanks](#thanks)1
+  * [Thanks](#thanks)
   * [Changelog](#changelog)
   * [Installing](#installing)
   * [Source](#source)
@@ -293,8 +293,15 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.15.1:
+  * Dataclasses install only required on python 3.6.x (cherry-pick from Saeid Akbari branch)
+  * Removed deprecated `AlphaMode` after two years (use the `pygltflib.BLEND`, `pygltflib.MASK`, `pygltflib.OPAQUE` constants directly)
+  * Removed deprecated `SparseAccessor` after two years (use `AccessorSparseIndices` and `AccessorSparseValues` instead)
+  * Removed deprecated `MaterialTexture` after two years (use `TextureInfo` instead)
+  * removed `deprecated` requirement from project
+
 * 1.15.0: 
-  * Significantly improved save_to_bytes performance (20x faster) (Florian Bruggisser)
+  * Significantly improved `save_to_bytes` performance (20x faster) (Florian Bruggisser)
     * NOTE: Underlying binary blob is now mutable instead of immutable. 
 
 * 1.14.7

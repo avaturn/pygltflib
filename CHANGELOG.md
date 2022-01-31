@@ -1,3 +1,14 @@
+* 1.15.1:
+  * Dataclasses install only required on python 3.6.x (cherry-pick from Saeid Akbari branch)
+  * Removed deprecated `AlphaMode` after two years (use the `pygltflib.BLEND`, `pygltflib.MASK`, `pygltflib.OPAQUE` constants directly)
+  * Removed deprecated `SparseAccessor` after two years (use `AccessorSparseIndices` and `AccessorSparseValues` instead)
+  * Removed deprecated `MaterialTexture` after two years (use `TextureInfo` instead)
+  * removed `deprecated` requirement from project
+
+* 1.15.0: 
+  * Significantly improved `save_to_bytes` performance (20x faster) (Florian Bruggisser)
+    * NOTE: Underlying binary blob is now mutable instead of immutable. 
+
 * 1.14.7
   * add `GLTF.get_data_from_buffer_uri` helper method to simplify access to buffer data (see bounding box example in README.md) (el_flamenco)
 

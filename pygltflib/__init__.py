@@ -45,9 +45,8 @@ import warnings
 from dataclasses_json import dataclass_json as dataclass_json
 from dataclasses_json.core import _decode_dataclass
 from dataclasses_json.core import _ExtendedEncoder as JsonEncoder
-from deprecated import deprecated
 
-__version__ = "1.15.0"
+__version__ = "1.15.1"
 
 """
 About the GLTF2 file format:
@@ -149,14 +148,6 @@ MASK = "MASK"
 OPAQUE = "OPAQUE"
 
 MATERIAL_ALPHAMODES = [OPAQUE, MASK, BLEND]
-
-
-@deprecated("Please use the pygltflib.BLEND, pygltflib.MASK, pygltflib.OPAQUE constants directly.")
-class AlphaMode(Enum):
-    BLEND = "BLEND"
-    MASK = "MASK"
-    OPAQUE = "OPAQUE"
-
 
 JSON = "JSON"
 BIN = "BIN\x00"
@@ -317,15 +308,6 @@ class Mesh(Property):
     name: Optional[str] = None
 
 
-@deprecated("Please use AccessorSparseIndices and AccessorSparseValues instead")
-@dataclass_json
-@dataclass
-class SparseAccessor(Property):
-    bufferView: int = None  # required
-    byteOffset: Optional[int] = 0
-    componentType: int = None  # required
-
-
 @dataclass_json
 @dataclass
 class AccessorSparseIndices(Property):
@@ -407,14 +389,6 @@ class Camera(Property):
     orthographic: Optional[Orthographic] = None
     type: str = None
     name: Optional[str] = None
-
-
-@deprecated("Please use TextureInfo instead.")
-@dataclass_json
-@dataclass
-class MaterialTexture(Property):
-    index: int = None  # required
-    texCoord: Optional[int] = 0
 
 
 @dataclass_json

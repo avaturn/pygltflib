@@ -34,7 +34,6 @@ from . import *
 
 # some higher level helper functions
 
-
 def add_node(gltf, node):
     warnings.warn("pygltf.utils.add_node is a provisional function and may not exist in future versions.")
     if gltf.scene is not None:
@@ -48,6 +47,7 @@ def find_node_index_by_name(gltf: GLTF2, name):
         if node.name == name:
             return index
     return -1
+
 
 def add_default_camera(gltf):
     warnings.warn("pygltf.utils.add_default_camera is a provisional function and may not exist in future versions.")
