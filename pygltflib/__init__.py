@@ -360,7 +360,7 @@ class BufferView(Property):
 @dataclass_json
 @dataclass
 class Buffer(Property):
-    uri: Optional[str] = ""
+    uri: Optional[str] = None
     byteLength: int = None
 
 
@@ -597,7 +597,7 @@ class GLTF2(Property):
         path = getattr(self, "_path", Path())
         uri_format = None
 
-        if uri == '':  # assume loaded from glb binary file
+        if uri is None:  # assume loaded from glb binary file
             uri_format = BufferFormat.BINARYBLOB
             if len(self.buffers) > 1:
                 warnings.warn("GLTF has multiple buffers but only one buffer binary blob, pygltflib might corrupt data."
@@ -849,7 +849,7 @@ class GLTF2(Property):
                                   "Please open an issue at https://gitlab.com/dodgyville/pygltflib/issues")
                     return
                 self.set_binary_blob(data)
-                buffer.uri = ''
+                buffer.uri = None
             elif buffer_format == BufferFormat.DATAURI:
                 # convert buffer to a data uri
                 data = base64.b64encode(data).decode('utf-8')
@@ -926,7 +926,7 @@ class GLTF2(Property):
         path = Path(fname)
         original_buffers = copy.deepcopy(self.buffers)
         for i, buffer in enumerate(self.buffers):
-            if buffer.uri == '':  # save glb_data as bin file
+            if buffer.uri is None:  # save glb_data as bin file
                 # update the buffer uri to point to our new local bin file
                 glb_data = self.binary_blob()
                 if glb_data:
@@ -952,7 +952,7 @@ class GLTF2(Property):
 
         for i, bufferView in enumerate(self.bufferViews):
             buffer = self.buffers[bufferView.buffer]
-            if buffer.uri == '':  # assume loaded from glb binary file
+            if buffer.uri is None:  # assume loaded from glb binary file
                 if binary_blob is None:
                     binary_blob = self.binary_blob()
                 data = binary_blob
