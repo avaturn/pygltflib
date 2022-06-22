@@ -269,7 +269,7 @@ class TestBufferConversions:
     def test_identify_binfile(self):
         gltf = GLTF2()
         uri = b'\x00\x00\x01\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80?\x00\x00\x00\x00'
-        uri = ''  # empty uri means data blob
+        uri = None  # undefined uri means data blob
         buffer_format = gltf.identify_uri(uri)
         assert buffer_format == BufferFormat.BINARYBLOB
 
@@ -286,7 +286,7 @@ class TestBufferConversions:
 
             gltf.convert_buffers(BufferFormat.BINARYBLOB)
 
-            assert gltf.buffers[0].uri == ""
+            assert gltf.buffers[0].uri == None
             assert len(gltf.binary_blob()) > 0
             print("binary blob success", gltf.binary_blob())
 
