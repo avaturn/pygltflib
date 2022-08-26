@@ -920,7 +920,12 @@ class GLTF2(Property):
         return result
 
     def gltf_to_json(self, separators=None, indent="  ") -> str:
-        return self.to_json(default=json_serial, indent=indent, allow_nan=False, skipkeys=True, separators=separators, sort_keys=True)
+        return self.to_json(default=json_serial,
+                            indent=indent,
+                            allow_nan=False,
+                            skipkeys=True,
+                            separators=separators,
+                            sort_keys=True)
 
     def save_json(self, fname):
         path = Path(fname)
