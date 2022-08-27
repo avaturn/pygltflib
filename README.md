@@ -294,6 +294,8 @@ We are very interested in hearing your use cases for `pygltflib` to help drive t
 `pyltflib` made for 'The Beat: A Glam Noir Game' supported by Film Victoria. 
 
 ### Changelog
+* 1.15.3:
+  * Use sort_keys by default for deterministic output (Kevin Kreise)
 * 1.15.2:
   * buffer.uri defaults to None (Kevin Kreise)
 * 1.15.1:
