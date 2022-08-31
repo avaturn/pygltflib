@@ -626,14 +626,14 @@ class TestDefaults:
   },
   "materials": [
     {
-      "alphaCutoff": 0.5,
-      "alphaMode": "OPAQUE",
-      "doubleSided": false,
       "emissiveFactor": [
         0.0,
         0.0,
         0.0
-      ]
+      ],
+      "alphaMode": "OPAQUE",
+      "alphaCutoff": 0.5,
+      "doubleSided": false
     }
   ]
 }"""
@@ -655,14 +655,6 @@ class TestDefaults:
   },
   "materials": [
     {
-      "alphaCutoff": 0.5,
-      "alphaMode": "OPAQUE",
-      "doubleSided": false,
-      "emissiveFactor": [
-        0.0,
-        0.0,
-        0.0
-      ],
       "pbrMetallicRoughness": {
         "baseColorFactor": [
           1.0,
@@ -672,7 +664,15 @@ class TestDefaults:
         ],
         "metallicFactor": 1.0,
         "roughnessFactor": 1.0
-      }
+      },
+      "emissiveFactor": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "alphaMode": "OPAQUE",
+      "alphaCutoff": 0.5,
+      "doubleSided": false
     }
   ]
 }"""

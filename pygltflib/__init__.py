@@ -282,7 +282,7 @@ class Attributes:
     def to_json(self, *args, **kwargs):
         # Attributes objects can have custom attrs, so use our own json conversion methods.
         data = copy.deepcopy(self.__dict__)
-        return json.dumps(data, **kwargs)
+        return json.dumps(data)
 
     @staticmethod
     def from_json():
@@ -920,12 +920,7 @@ class GLTF2(Property):
         return result
 
     def gltf_to_json(self, separators=None, indent="  ") -> str:
-        return self.to_json(default=json_serial,
-                            indent=indent,
-                            allow_nan=False,
-                            skipkeys=True,
-                            separators=separators,
-                            sort_keys=True)
+        return self.to_json(default=json_serial, indent=indent, allow_nan=False, skipkeys=True, separators=separators)
 
     def save_json(self, fname):
         path = Path(fname)
