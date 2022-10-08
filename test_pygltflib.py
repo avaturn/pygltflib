@@ -586,7 +586,7 @@ class TestDefaults:
         assert p1.attributes.POSITION == 1
 
         p2 = Primitive()
-        assert p1.attributes.POSITION is 1
+        assert p1.attributes.POSITION == 1
 
         p2.attributes.POSITION = 2
         assert p1.attributes.POSITION == 1
