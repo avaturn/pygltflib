@@ -205,8 +205,7 @@ class GLTF2(Property):
             if cur_buffer_view.byteStride is not None:
                 warnings.warn(f"ByteStride is not None, may cause issues in GLTF")
 
-
-        self.convert_buffers(BufferFormat.BINARYBLOB)
+        # self.convert_buffers(BufferFormat.BINARYBLOB)
         data: bytes = self.binary_blob()
 
         # Shrink the buffer
@@ -218,7 +217,7 @@ class GLTF2(Property):
 
         # Update meta
         self.buffers[0].byteLength = len(data)
-        self.convert_buffers(BufferFormat.DATAURI)
+        # self.convert_buffers(BufferFormat.DATAURI)
 
         return bufferView
 
@@ -329,7 +328,7 @@ class GLTF2(Property):
                 image.name = copy.copy(image.uri) if not image.name else image.name
                 image.uri = f"data:{image.mimeType};base64,{encoded_string}"
             elif target_format == ImageFormat.BUFFERVIEW:
-                self.convert_buffers(BufferFormat.BINARYBLOB)
+                # self.convert_buffers(BufferFormat.BINARYBLOB)
 
                 # Add to buffer
                 data = self.binary_blob()
@@ -350,7 +349,7 @@ class GLTF2(Property):
                 image.bufferView = len(self.bufferViews) - 1
 
                 # Back to DATAURI format
-                self.convert_buffers(BufferFormat.DATAURI)
+                # self.convert_buffers(BufferFormat.DATAURI)
 
             elif target_format == ImageFormat.FILE:  # convert to images
 
@@ -375,6 +374,8 @@ class GLTF2(Property):
         buffer_format (BufferFormat.ENUM)
         override (bool): Override a bin file if it already exists and is about to be replaced
         """
+
+        print("CONVERT BINARY BLOB: ----> ", buffer_format.value)
         if path is not None:
             path = Path(path)
         else:
@@ -720,9 +721,9 @@ def image_get_bytes(image: Image, gltf: GLTF2, path):
             return image_file.read()
 
     elif image.current_format == ImageFormat.BUFFERVIEW:
-        gltf.convert_buffers(BufferFormat.BINARYBLOB)
+        # gltf.convert_buffers(BufferFormat.BINARYBLOB)
         data = gltf.binary_blob()
-        gltf.convert_buffers(BufferFormat.DATAURI)
+        # gltf.convert_buffers(BufferFormat.DATAURI)
 
         bufferView = gltf.bufferViews[image.bufferView]
         image_data: bytes = data[
@@ -733,4 +734,3 @@ def image_get_bytes(image: Image, gltf: GLTF2, path):
         return gltf.decode_data_uri(
             image.uri, image.uri[: image.uri.find("base64,") + 7]
         )
-
