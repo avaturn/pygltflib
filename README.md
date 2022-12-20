@@ -1,5 +1,7 @@
 # pygltflib
 
+Forked from: https://gitlab.com/dodgyville/pygltflib
+
 This is a library for reading, writing and handling GLTF files. It works for Python3.6 and above.
 
 It supports the entire specification, including materials and animations. Main features are:
