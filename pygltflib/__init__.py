@@ -375,7 +375,6 @@ class GLTF2(Property):
         override (bool): Override a bin file if it already exists and is about to be replaced
         """
 
-        print("CONVERT BINARY BLOB: ----> ", buffer_format.value)
         if path is not None:
             path = Path(path)
         else:
