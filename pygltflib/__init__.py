@@ -205,6 +205,20 @@ class GLTF2(Property):
             if cur_buffer_view.byteStride is not None:
                 warnings.warn(f"ByteStride is not None, may cause issues in GLTF")
 
+        # self.convert_buffers(BufferFormat.BINARYBLOB)
+        data: bytes = self.binary_blob()
+
+        # Shrink the buffer
+        data = (
+            data[: bufferView.byteOffset]
+            + data[bufferView.byteOffset + bufferView.byteLength :]
+        )
+        self.set_binary_blob(data)
+
+        # Update meta
+        self.buffers[0].byteLength = len(data)
+        # self.convert_buffers(BufferFormat.DATAURI)
+
         return bufferView
 
     def export_datauri_as_image_file(
@@ -281,20 +295,20 @@ class GLTF2(Property):
             # Clean up old representation
             #############################
             if image.current_format == ImageFormat.BUFFERVIEW:
-                self.convert_buffers(BufferFormat.BINARYBLOB)
+                # self.convert_buffers(BufferFormat.BINARYBLOB)
 
-                data: bytes = self.binary_blob()
-                bufferView = self.bufferViews[image.bufferView]
+                # data: bytes = self.binary_blob()
+                # bufferView = self.bufferViews[image.bufferView]
 
-                # Shrink the buffer
-                data = (
-                    data[: bufferView.byteOffset]
-                    + data[bufferView.byteOffset + bufferView.byteLength :]
-                )
-                self.set_binary_blob(data)
+                # # Shrink the buffer
+                # data = (
+                #     data[: bufferView.byteOffset]
+                #     + data[bufferView.byteOffset + bufferView.byteLength :]
+                # )
+                # self.set_binary_blob(data)
 
-                # Update meta
-                self.buffers[0].byteLength = len(data)
+                # # Update meta
+                # self.buffers[0].byteLength = len(data)
 
                 # Remove the bufferView
                 idx = image.bufferView
@@ -302,7 +316,7 @@ class GLTF2(Property):
 
                 self.remove_bufferView(idx)
 
-                self.convert_buffers(BufferFormat.DATAURI)
+                # self.convert_buffers(BufferFormat.DATAURI)
 
             image.uri = None
 
@@ -314,7 +328,7 @@ class GLTF2(Property):
                 image.name = copy.copy(image.uri) if not image.name else image.name
                 image.uri = f"data:{image.mimeType};base64,{encoded_string}"
             elif target_format == ImageFormat.BUFFERVIEW:
-                self.convert_buffers(BufferFormat.BINARYBLOB)
+                # self.convert_buffers(BufferFormat.BINARYBLOB)
 
                 # Add to buffer
                 data = self.binary_blob()
@@ -335,7 +349,7 @@ class GLTF2(Property):
                 image.bufferView = len(self.bufferViews) - 1
 
                 # Back to DATAURI format
-                self.convert_buffers(BufferFormat.DATAURI)
+                # self.convert_buffers(BufferFormat.DATAURI)
 
             elif target_format == ImageFormat.FILE:  # convert to images
 
@@ -360,6 +374,7 @@ class GLTF2(Property):
         buffer_format (BufferFormat.ENUM)
         override (bool): Override a bin file if it already exists and is about to be replaced
         """
+
         if path is not None:
             path = Path(path)
         else:
@@ -705,9 +720,9 @@ def image_get_bytes(image: Image, gltf: GLTF2, path):
             return image_file.read()
 
     elif image.current_format == ImageFormat.BUFFERVIEW:
-        gltf.convert_buffers(BufferFormat.BINARYBLOB)
+        # gltf.convert_buffers(BufferFormat.BINARYBLOB)
         data = gltf.binary_blob()
-        gltf.convert_buffers(BufferFormat.DATAURI)
+        # gltf.convert_buffers(BufferFormat.DATAURI)
 
         bufferView = gltf.bufferViews[image.bufferView]
         image_data: bytes = data[
