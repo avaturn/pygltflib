@@ -198,9 +198,11 @@ class GLTF2(Property):
         for i, obj in enumerate(self.images):
             update_obj(f"gltf.images[{i}]", obj)
 
+        alignment = 4
+        shift = (bufferView.byteLength + alignment - 1) // alignment * alignment
         for i, cur_buffer_view in enumerate(self.bufferViews):
             if cur_buffer_view.byteOffset > bufferView.byteOffset:
-                cur_buffer_view.byteOffset -= bufferView.byteLength
+                cur_buffer_view.byteOffset -= shift
 
             if cur_buffer_view.byteStride is not None:
                 warnings.warn(f"ByteStride is not None, may cause issues in GLTF")
