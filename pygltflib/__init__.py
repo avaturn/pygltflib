@@ -166,14 +166,15 @@ class GLTF2(Property):
 
     def append_to_buffer(self, array_bytes):
         buf_bytes = bytearray(self.binary_blob())
+        old_buf_len = len(buf_bytes)
 
         # alignment
         itemsize = 4
         pad_num = (itemsize - len(array_bytes) % itemsize) % itemsize
-        new_buf_bytes = buf_bytes + array_bytes + ("0" * pad_num).encode()
-        self.set_binary_blob(bytes(new_buf_bytes))
+        buf_bytes += array_bytes + ("0" * pad_num).encode()
+        self.set_binary_blob(bytes(buf_bytes))
 
-        return len(buf_bytes), len(array_bytes)
+        return old_buf_len, len(array_bytes)
 
     def create_bufferView(self, new_attr_buffer):
         byte_offset, byte_len = self.append_to_buffer(
