@@ -164,6 +164,28 @@ class GLTF2(Property):
 
         return data
 
+    def append_to_buffer(self, array_bytes):
+        buf_bytes = bytearray(self.binary_blob())
+        old_buf_len = len(buf_bytes)
+
+        # alignment
+        itemsize = 4
+        pad_num = (itemsize - len(array_bytes) % itemsize) % itemsize
+        buf_bytes += array_bytes + ("0" * pad_num).encode()
+        self.set_binary_blob(bytes(buf_bytes))
+
+        return old_buf_len, len(array_bytes)
+
+    def create_bufferView(self, new_attr_buffer):
+        byte_offset, byte_len = self.append_to_buffer(
+            new_attr_buffer
+        )
+        new_buffer_view = BufferView(
+            buffer=0, byteOffset=byte_offset, byteLength=byte_len
+        )
+        self.bufferViews.append(new_buffer_view)
+        return len(self.bufferViews) - 1
+
     # noinspection PyPep8Naming
     def remove_bufferView(self, buffer_view_id):
         """
@@ -198,9 +220,12 @@ class GLTF2(Property):
         for i, obj in enumerate(self.images):
             update_obj(f"gltf.images[{i}]", obj)
 
+        alignment = 4
+        shift = (bufferView.byteLength + alignment - 1) // alignment * alignment
+        # shift = bufferView.byteLength
         for i, cur_buffer_view in enumerate(self.bufferViews):
             if cur_buffer_view.byteOffset > bufferView.byteOffset:
-                cur_buffer_view.byteOffset -= bufferView.byteLength
+                cur_buffer_view.byteOffset -= shift
 
             if cur_buffer_view.byteStride is not None:
                 warnings.warn(f"ByteStride is not None, may cause issues in GLTF")
