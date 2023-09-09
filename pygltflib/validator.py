@@ -75,7 +75,7 @@ def validate_accessors_sparse(gltf: GLTF2):
 def validate_animation_channel(gltf: GLTF2):
     for animation in gltf.animations:
         for channel in animation.channels:
-            if not channel.sampler:
+            if not isinstance(channel.sampler, int):
                 raise MissingRequiredField("animation.channel requires sampler")
             if not channel.target:
                 raise MissingRequiredField("animation.channel requires sampler")
