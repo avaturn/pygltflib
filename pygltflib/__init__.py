@@ -220,12 +220,26 @@ class GLTF2(Property):
         for i, obj in enumerate(self.images):
             update_obj(f"gltf.images[{i}]", obj)
 
-        alignment = 4
-        shift = (bufferView.byteLength + alignment - 1) // alignment * alignment
-        # shift = bufferView.byteLength
+        def min_tuple(iterable):
+            return min(enumerate(iterable), key=lambda x: x[1][1])[1]
+
+        other_buffers = [(x, x.byteOffset) for x in self.bufferViews if x.byteOffset > bufferView.byteOffset]
+        if (len(other_buffers) == 0):
+            # last buffer
+            # shift = bufferView.byteLength
+            alignment = 4
+            shift = ((bufferView.byteLength + alignment - 1) // alignment) * alignment
+        else: 
+            nextBuffer = min_tuple(other_buffers)[0]
+            shift = nextBuffer.byteOffset - bufferView.byteOffset
+
         for i, cur_buffer_view in enumerate(self.bufferViews):
             if cur_buffer_view.byteOffset > bufferView.byteOffset:
                 cur_buffer_view.byteOffset -= shift
+
+                if(cur_buffer_view.byteOffset % 4) != 0:
+                    warnings.warn(f"byteOffset is not dividable by 4")
+                    raise Exception("Something is wrong with the library.")
 
             if cur_buffer_view.byteStride is not None:
                 warnings.warn(f"ByteStride is not None, may cause issues in GLTF")
@@ -236,7 +250,7 @@ class GLTF2(Property):
         # Shrink the buffer
         data = (
             data[: bufferView.byteOffset]
-            + data[bufferView.byteOffset + bufferView.byteLength :]
+            + data[bufferView.byteOffset + shift :]
         )
         self.set_binary_blob(data)
 
